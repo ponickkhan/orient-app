@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Service & Maintenance Checklist — Print-Optimized</title>
+<style>
+  /* ===== Page & Core ===== */
+  @page { size: A4 portrait; margin: 7mm; }
+  html, body { height: 100%; }
+  body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    color:#111;
+    background:#fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    line-height:1.15;
+  }
+  :root{
+    --ink:#1b1e24;
+    --line:#3a3f48;
+    --muted:#6c727f;
+    --head-bg:#e9edf3;
+    --vtitle-bg:#2c2f36;
+    --vtitle-fg:#ffffff;
+    --bar:#2c2f36;
+    --bar-fg:#ffffff;
+  }
+
+  .toolbar{
+    position: sticky; top:0; z-index:50;
+    background:#f5f7fb; border-bottom:1px solid #d7dce8;
+    padding:8px; display:flex; gap:8px; justify-content:flex-end;
+  }
+  .btn{ appearance:none; border:1px solid #cad2e2; background:#fff; padding:8px 12px; border-radius:8px; font-weight:700; cursor:pointer; }
+  .btn.primary{ background:#2e5aa6; color:#fff; border-color:#2e5aa6; }
+
+  .sheet{ width: calc(210mm - 16mm); min-height: calc(297mm - 16mm); margin: 8mm auto; }
+
+  /* ===== Blocks & Tables ===== */
+  .block{ border:2px solid var(--line); border-radius:3px; overflow:hidden; margin-top:6px; }
+  table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+  th, td{ border:1px solid var(--line); padding:4px 6px; vertical-align:middle; background:#fff; }
+  th{ background:var(--head-bg); text-align:left; font-weight:700; }
+  .tight th, .tight td{ padding:3px 4px; }
+  .small td, .small th{ font-size:11px; }
+  .center{ text-align:center; }
+  .muted{ color:var(--muted); }
+  .nowrap{ white-space:nowrap; }
+
+  /* ===== Title band ===== */
+  .titleband{
+    display:grid; grid-template-columns:1fr auto; align-items:end; gap:8px;
+    border:2px solid var(--line); padding:8px 10px; margin-bottom:6px;
+    background:#fff;
+  }
+  .titleband h1{ margin:0; font-size:20px; letter-spacing:.2px; }
+  .brand{ font-weight:900; font-size:22px; letter-spacing:1px; display:flex; align-items:center; gap:8px; }
+  .brand .dot{ width:22px; height:22px; border-radius:50%; background:#000; display:inline-block; }
+
+  /* ===== Vertical title cell ===== */
+  .vtitle{
+    background: var(--vtitle-bg);
+    color: var(--vtitle-fg);
+    font-weight: 800;
+    letter-spacing: .5px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+    width: 22px; min-width: 22px;
+  }
+  .vtitle span{ display:inline-block; line-height:1.2; margin:auto; }
+
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:6px; }
+  .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; }
+
+  .sigbox{ height:34px; border:1px dashed var(--line); background:#fff; }
+
+  input[type="text"], input[type="date"], select{
+    width:100%; border:0; background:transparent; font:inherit; color:#111;
+    -webkit-text-fill-color:#111;
+    padding:0;
+  }
+  select{ padding:0; }
+
+  /* ===== Safety split bar ===== */
+  .splitbar{
+    background: var(--bar);
+    color: var(--bar-fg);
+    display:grid;
+    grid-template-columns: 32% 68%;
+    align-items:center;
+    font-weight:800;
+    letter-spacing:.2px;
+    font-size:12px;
+    line-height:1.1;
+  }
+  .splitbar .left, .splitbar .right{
+    padding:4px 6px;
+    border-right:1px solid rgba(255,255,255,.25);
+    text-align:center;
+  }
+  .splitbar .right{ border-right:0; }
+
+  /* ===== Compact inline metrics (one skinny line) ===== */
+  .metrics-inline{
+    display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+    font-size:10.5px;
+  }
+  .metrics-inline .label{ color:var(--muted); }
+  .mini{ width:40px; min-width:40px; padding:0; text-align:center; }
+
+  /* ===== Print squeeze ===== */
+  @media print{
+  .toolbar{ display:none !important; }
+  a.btn { display:none !important; }
+    @page{ margin:5mm; }
+    body{ font-size: 9.2px; line-height:1.12; }
+    table{ font-size:9.2px; }
+    th, td{ padding:1.8px 2.6px; }
+    .tight th, .tight td{ padding:1.6px 2.4px; }
+    .small td, .small th{ font-size:9.2px; }
+    .titleband{ padding:6px 8px; }
+    .titleband h1{ font-size:16.5px; }
+    .brand{ font-size:16.5px; }
+    .block{ border-width:1.2px; margin-top:4px; }
+    .sheet{ width: 210mm; margin:0 auto; }
+    .vtitle{ width:18px; min-width:18px; }
+    tr, table, .block { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div style="margin: 16px 0 0 16px;"><a href="index.html" class="btn">&larr; Back to Home</a></div>
+
+<div class="toolbar" role="toolbar" aria-label="Actions">
+  <button class="btn" type="button" onclick="document.querySelector('form').reset()">Reset</button>
+  <button class="btn primary" type="button" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="sheet">
+<form>
+
+
+  <!-- Title -->
+  <div class="titleband">
+    <h1>SERVICE &amp; MAINTENANCE CHECKLIST</h1>
+    <div class="brand">
+      <img src="logo.png" alt="Logo" style="height:38px; width:auto; display:inline-block; vertical-align:middle;">
+    </div>
+  </div>
+
+  <div class="muted" style="font-size:11px; margin-bottom:6px;">
+    Safety checks in accordance with the Gas Safety (Installation and Use) Regulations can be recorded on this checklist on the basis that, if not applicable, certain results are based on visual inspection only. Detailed inspections have not been undertaken unless specifically recorded. This checklist is not designed to be used as a Landlord/Homeowner Gas Safety Record (CPG17) or Gas Safety Record (CPG18).
+  </div>
+
+  <!-- BUSINESS -->
+  <div class="block">
+    <table class="tight small">
+      <colgroup><col style="width:22px"><col style="width:14%"><col style="width:36%"><col style="width:14%"><col style="width:36%"></colgroup>
+      <tr>
+        <td class="vtitle" rowspan="4"><span>BUSINESS</span></td>
+        <th>Company</th><td><input type="text" value="ORIENT Gas Engineers LTD."></td>
+        <th>Gas Safe Reg No</th><td><input type="text" value="927879"></td>
+      </tr>
+      <tr>
+        <th>Address</th><td><input type="text" value="45 Chalk Pit Avenue, Orpington"></td>
+        <th>Engineer Name</th><td><input type="text"></td>
+      </tr>
+      <tr>
+        <th>Postcode</th><td><input type="text"></td>
+        <th>Licence No</th><td><input type="text"></td>
+      </tr>
+      <tr>
+        <th>Telephone</th><td><input type="text"></td>
+        <th>Mobile</th><td><input type="text"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- SITE + CLIENT -->
+  <div class="row2">
+    <div class="block">
+      <table class="tight small">
+        <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
+        <tr>
+          <td class="vtitle" rowspan="4"><span>SITE</span></td>
+          <th>Tenant/Homeowner Name</th><td><input type="text"></td>
+        </tr>
+        <tr><th>Address</th><td><input type="text"></td></tr>
+        <tr><th>Postcode</th><td><input type="text"></td></tr>
+        <tr><th>Contact</th><td><input type="text" placeholder="Phone / Email"></td></tr>
+      </table>
+    </div>
+    <div class="block">
+      <table class="tight small">
+        <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
+        <tr>
+          <td class="vtitle" rowspan="4"><span>CLIENT</span></td>
+          <th>Landlord/Agent Name</th><td><input type="text"></td>
+        </tr>
+        <tr><th>Address</th><td><input type="text"></td></tr>
+        <tr><th>Postcode</th><td><input type="text"></td></tr>
+        <tr><th>Contact</th><td><input type="text" placeholder="Phone / Email"></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- INSTALLATION + APPLIANCE (brief, side by side) -->
+  <div class="row2">
+    <!-- INSTALLATION checklist -->
+    <div class="block">
+      <table class="tight small">
+        <colgroup>
+          <col style="width:22px"><!-- vtitle -->
+          <col><!-- item -->
+          <col style="width:10%"><!-- pass -->
+          <col style="width:10%"><!-- fail -->
+          <col style="width:10%"><!-- na -->
+        </colgroup>
+        <tr>
+          <td class="vtitle" rowspan="6"><span>INSTALLATION</span></td>
+          <th>Item</th><th class="center">Pass</th><th class="center">Fail</th><th class="center">N/A</th>
+        </tr>
+        <tr><td>Satisfactory Meter/Cylinder</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
+        <tr><td>Inspection of Visible Pipework</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
+        <tr><td>ECV Access and Operation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
+        <tr><td>Protective Equipotential Bonding</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
+        <tr><td>Tightness Test</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
+      </table>
+    </div>
+
+    <!-- APPLIANCE (brief) -->
+    <div class="block">
+      <table class="tight small">
+        <colgroup><col style="width:22px"><col style="width:38%"><col></colgroup>
+        <tr>
+          <td class="vtitle" rowspan="7"><span>APPLIANCE</span></td>
+          <th>Location</th><td><input type="text" placeholder="e.g., Kitchen"></td>
+        </tr>
+        <tr>
+          <th>Owned by Landlord/Homeowner</th>
+          <td>
+            <select>
+              <option value="Yes" selected>Yes</option>
+              <option value="No">No</option>
+            </select>
+          </td>
+        </tr>
+        <tr><th>Type</th><td><input type="text" placeholder="Boiler / Fire / Hob"></td></tr>
+        <tr><th>Model</th><td><input type="text"></td></tr>
+        <tr>
+          <th>Chimney/Flue Type</th>
+          <td>
+            <select>
+              <option value="Flueless" selected>Flueless</option>
+              <option value="Open Flue">Open Flue</option>
+              <option value="Room-Sealed">Room-Sealed</option>
+            </select>
+          </td>
+        </tr>
+        <tr><th>Manufacturer</th><td><input type="text"></td></tr>
+        <tr><th>Serial No</th><td><input type="text"></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- SAFETY CHECKS (single horizontal bar, no inputs) -->
+  <div class="block">
+    <div class="splitbar">
+      <div class="left">SAFETY CHECKS</div>
+      <div class="right">Safety Related Defects Identified and any Remedial Action Taken</div>
+    </div>
+  </div>
+
+  <!-- BIG APPLIANCE SECTION -->
+  <div class="block">
+    <table class="tight small">
+      <colgroup>
+        <col style="width:22px"><!-- vtitle -->
+        <col><!-- item -->
+        <col style="width:10%"><!-- pass -->
+        <col style="width:10%"><!-- fail -->
+        <col style="width:10%"><!-- na -->
+        <col style="width:22%"><!-- comments (slightly narrower) -->
+      </colgroup>
+      <tr>
+        <td class="vtitle" rowspan="21"><span>APPLIANCE</span></td>
+        <th>Item</th>
+        <th class="center">Pass</th>
+        <th class="center">Fail</th>
+        <th class="center">N/A</th>
+        <th>Comments</th>
+      </tr>
+
+      <tr><td>Gas Connection and Isolation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Electrical Connection &amp; Isolation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Water Connection &amp; Isolation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Overall Condition, Stability and Controls Operation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Visual Inspection of Heat Exchanger</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Burner and Injectors</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Fans</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Ignition</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Flame Picture</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Correct Safety Device(s) Operation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+
+      <!-- SPECIAL: Heat Input (super compact inline) -->
+      <tr>
+        <td>Heat Input / Operating Pressure</td>
+        <td class="center"></td><td class="center"></td><td class="center"></td>
+        <td>
+          <div class="metrics-inline">
+            <span class="label">kW</span><input class="mini" type="text">
+            <span class="label">kW/h</span><input class="mini" type="text">
+            <span class="label">mbar</span><input class="mini" type="text">
+          </div>
+        </td>
+      </tr>
+
+      <tr><td>Seals including Appliance Casing</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Condensate Trap/Disposal</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Pressure/Temperature Relief Valve</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Return Air/Plenum</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Fireplace Catchment Space and Closure Plate</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Flue Flow &amp; Spillage Test</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Satisfactory Chimney/Flue</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr><td>Satisfactory Ventilation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+
+      <!-- SPECIAL: Final Combustion (super compact inline) -->
+      <tr>
+        <td>Final Combustion Analyser Reading</td>
+        <td class="center"></td><td class="center"></td><td class="center"></td>
+        <td>
+          <div class="metrics-inline">
+            <span class="label">CO</span><input class="mini" type="text">
+            <span class="label">CO₂%/Ratio</span><input class="mini" type="text">
+            <span class="label">O₂%</span><input class="mini" type="text">
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="block">
+    <table class="tight small">
+      <colgroup>
+        <col style="width:22px">
+        <col style="width:16%"><col style="width:12%"><col style="width:12%">
+        <col style="width:16%"><col style="width:12%"><col style="width:20%">
+      </colgroup>
+      <tr>
+        <td class="vtitle"><span>SUMMARY</span></td>
+        <th>Safe to Use</th>
+        <td class="center"><input type="text" placeholder="Yes"></td>
+        <td class="center"><input type="text" placeholder="No"></td>
+        <th>GIUSP Classification</th>
+        <td class="center"><input type="text" placeholder="None / AR / ID"></td>
+        <th>Warning/Advisory Notice</th>
+        <td class="center"><input type="text" placeholder="Serial No"></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- FOOTER: DATE / ENGINEER / CLIENT -->
+  <div class="row3">
+    <div class="block">
+      <table class="tight small">
+        <colgroup><col style="width:22px"><col style="width:42%"><col></colgroup>
+        <tr>
+          <td class="vtitle" rowspan="2"><span>DATE</span></td>
+          <th>Checks Completed</th><td><input type="date"></td>
+        </tr>
+        <tr><th>Next Service/Maintenance Due</th><td><input type="date"></td></tr>
+      </table>
+    </div>
+
+    <div class="block">
+      <table class="tight small">
+        <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
+        <tr>
+          <td class="vtitle" rowspan="3"><span>ENGINEER</span></td>
+          <th>Sign</th><td><div class="sigbox"><img src="signature.png" alt="Signature" style="height:32px; max-width:100%; object-fit:contain;"></div></td>
+        </tr>
+        <tr><th>Name</th><td><input type="text"></td></tr>
+        <tr><th>Licence No</th><td><input type="text"></td></tr>
+      </table>
+    </div>
+
+    <div class="block">
+      <table class="tight small">
+        <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
+        <tr>
+          <td class="vtitle" rowspan="3"><span>CLIENT</span></td>
+          <th>Sign</th><td><div class="sigbox"></div></td>
+        </tr>
+        <tr><th>Name</th><td><input type="text"></td></tr>
+        <tr><th>Position</th><td><input type="text"></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="muted" style="font-size:10px; margin-top:6px;">
+    © Orient Gas Engineers LTD.
+    <span class="nowrap"></span>
+  </div>
+
+</form>
+</div>
+
+</body>
+</html>

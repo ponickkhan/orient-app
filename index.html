@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Domestic Landlord / Homeowner Gas Safety Record</title>
+<style>
+  /* ---------- PAGE + COLORS ---------- */
+  @page { size: A4 landscape; margin: 8mm; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color:#000;
+    background:#fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  :root{
+    --blue:#2e5aa6;        /* section bars & due banner */
+    --line:#2e5aa6;        /* outer grid */
+    --cell:#ffffff;        /* base cell */
+    --head:#fffec7;        /* header cells */
+    --pale:#fff6b8;        /* pale highlight */
+  }
+
+  /* Top action toolbar */
+  .toolbar {
+    position: sticky; top: 0;
+    background: #fffec7;
+    border-bottom: 1px solid #bfb981;
+    padding: 8px; display:flex; gap:8px; justify-content:flex-end; z-index: 50;
+  }
+  .btn { appearance:none; border:1px solid #b7c3e8; background:#fff; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; }
+  .btn.primary { background:#2e5aa6; color:#fff; border-color:#2e5aa6; }
+
+  .sheet { width: calc(297mm - 16mm); height: auto; margin: 8mm auto; box-sizing: border-box; }
+
+  .titleband { display:grid; grid-template-columns: 1fr auto; align-items:end; gap:10px; margin-bottom:6px; padding-bottom:3px; }
+  h1 { font-size:22px; margin:0; }
+
+  /* Blocks & tables */
+  .block { border:2px solid var(--line); border-radius:3px; overflow:hidden; margin-top:6px; }
+  .bar {
+    background:var(--blue); color:#fff; font-weight:700; font-size:13px; padding:4px 6px;
+    display:flex; align-items:center; justify-content:center; position:relative; min-height:28px;
+  }
+  .bar .title { pointer-events:none; }
+  .bar .actions { position:absolute; right:6px; display:flex; gap:6px; }
+  table { width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
+  th, td { border:1px solid var(--line); padding:2px 4px; background:var(--cell); vertical-align:middle; }
+  th { background:var(--head); text-align:left; font-weight:700; }
+  .ylw { background: var(--pale) !important; }
+  .nowrap th, .nowrap td { white-space:nowrap; }
+
+  .hdr { margin-top:6px; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .band-2-1 { display:grid; grid-template-columns: 2fr 1fr; gap:6px; }
+
+  .sigbox { height: 38px; }
+  .note { font-size:8px; margin-top:3px; }
+
+  /* Compact variants */
+  .tight td, .tight th { padding:3px 4px; }
+  .tiny td, .tiny th { padding:2px 3px; font-size:10.5px; }
+  .wrap2 th{ white-space:normal; line-height:1.2; }
+
+  /* Due banner: BLUE, centered, white date text (SHORTER HEIGHT) */
+  .due {
+    background: var(--blue);
+    color:#fff;
+    border:2px solid var(--line);
+    border-radius:3px;
+    padding:8px 6px;
+    margin-top: 10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:74px;            /* was 110px -> lowered */
+    text-align:center;
+  }
+  .due .big { font-size:18px; font-weight:800; }
+  .due .date-field{
+    border-bottom:1px solid rgba(255,255,255,.85);
+    color:#fff; -webkit-text-fill-color:#fff;
+  }
+  .due input[type="date"]::-webkit-datetime-edit,
+  .due input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  .due input[type="date"]::-webkit-datetime-edit-text,
+  .due input[type="date"]::-webkit-datetime-edit-month-field,
+  .due input[type="date"]::-webkit-datetime-edit-day-field,
+  .due input[type="date"]::-webkit-datetime-edit-year-field { color:#fff; }
+  .due input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(2); }
+
+  /* Tiny cross delete button */
+  .del-btn {
+    appearance:none;
+    background:transparent;
+    border:0;
+    color:#b70000;
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .del-btn:hover { color:#ff0000; }
+
+  /* PRINT OVERRIDES: squeeze to one A4 page */
+  @media print {
+    .sigbox img[alt="Signature"] { max-height:24px !important; }
+    .hdr img[alt="Logo"] { top:-45px !important; }
+    @page { size: A4 landscape; margin: 6mm; }
+  .toolbar, .add-btn, .del-btn, a.btn { display:none !important; }
+    th.actions-col, td.actions-col { display:none !important; }
+
+    body { font-size: 9.4px; }
+    h1 { font-size: 16.5px; }
+    table { font-size: 9.4px; }
+    .titleband { margin-bottom:4px; }
+
+    .block { border-width:1.2px; margin-top:4px; }
+    .bar { font-size:10.5px; padding:3px 4px; min-height:20px; }
+
+    th, td { padding:2px 3px; }
+    .tight td, .tight th { padding:2px 3px; }
+    .tiny td, .tiny th { padding:1px 2px; font-size:8.8px; }
+
+    .row3, .row2, .band-2-1 { gap:4px; }
+
+    .sigbox { height:26px; }
+
+    .due { min-height:60px; margin-top:4px; padding:6px 4px; } /* lowered in print */
+    .due .big { font-size:14.5px; }
+
+    .block, table, tr { page-break-inside: avoid; }
+  .sheet { margin: 0; width: 297mm; }
+  }
+
+  input[type="text"], input[type="date"], textarea {
+    width:100%;
+    border:0;
+    background:transparent;
+    font:inherit;
+    color:#000;
+    -webkit-text-fill-color:#000;
+  }
+  .date-field{ border-bottom:1px solid var(--line); padding-bottom:2px; min-height:18px; }
+  textarea { resize:vertical; }
+  .add-btn { appearance:none; border:1px solid #b7c3e8; background:#fff; padding:6px 10px; border-radius:6px; font-weight:700; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="toolbar" role="toolbar" aria-label="Actions">
+  <button class="btn" type="button" onclick="document.querySelector('form').reset(); renumberAll();">Reset</button>
+  <button class="btn primary" type="button" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="sheet">
+  <div style="display:flex; gap:16px; margin-bottom:24px; justify-content:center;">
+    <a href="index.html" class="btn primary">Home</a>
+    <a href="invoice.html" class="btn">Invoice</a>
+    <a href="service &amp; maintenance checklist.html" class="btn">Service &amp; Maintenance Checklist</a>
+  </div>
+  <form>
+    <div class="titleband">
+      <h1>Domestic Landlord / Homeowner Gas Safety Record</h1>
+    </div>
+
+
+    <!-- Header strip with logo on right -->
+    <table class="hdr">
+      <colgroup>
+        <col style="width:12%"><col style="width:23%"><col style="width:12%"><col style="width:23%"><col style="width:12%"><col style="width:18%">
+      </colgroup>
+      <tr>
+        <th>Date:</th>
+        <td><input class="date-field" type="date"  value="2024-09-18"></td>
+        <th>Ref:</th>
+        <td><input type="text"></td>
+        <td colspan="2" rowspan="2" style="text-align:right; vertical-align:middle; background:transparent; border:none; padding:0; position:relative; height:1px; min-width:120px;">
+          <div style="position:relative; height:1px; min-width:120px;">
+            <img src="logo.png" alt="Logo" style="position:absolute; right:0; top:-45px; max-height:70px; max-width:200px; z-index:2;">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th>Gas Safe Reg No:</th>
+        <td><input type="text" value="927879"></td>
+        <th>Serial no:</th>
+        <td><input type="text" value="GAUK00764057"></td>
+      </tr>
+    </table>
+
+    <!-- Top three blocks -->
+    <div class="row3">
+      <div class="block">
+        <div class="bar"><span class="title">Details of Registered Business</span></div>
+        <table>
+          <colgroup><col style="width:28%"><col></colgroup>
+          <tr><th>Name:</th><td><input type="text" value="Orient Gas Engineers LTD"></td></tr>
+          <tr><th>Address:</th><td><input type="text" value="45 Chalk Pit Avenue"></td></tr>
+          <tr><th></th><td><input type="text" value="Orpington"></td></tr>
+          <tr><th></th><td><input type="text" value="Kent"></td></tr>
+          <tr><th>Postcode:</th><td><input type="text" value="BR5 3JJ"></td></tr>
+          <tr><th>Contact Number:</th><td><input type="text" value="+44 7795 999196"></td></tr>
+        </table>
+      </div>
+
+      <div class="block">
+        <div class="bar"><span class="title">Details of Landlord / Homeowner (or agent where appropriate)</span></div>
+        <table>
+          <colgroup><col style="width:28%"><col></colgroup>
+          <tr><th>Name:</th><td><input type="text" value="Caroline Dowey"></td></tr>
+          <tr><th>Address:</th><td><input type="text" value="Flat 15"></td></tr>
+          <tr><th></th><td><input type="text" value="154 Goswell Road"></td></tr>
+          <tr><th></th><td><input type="text" value="London"></td></tr>
+          <tr><th></th><td><input type="text" value="Uk"></td></tr>
+          <tr><th>Postcode:</th><td><input type="text" value="EC1V 7DX"></td></tr>
+          <tr><th>Contact Number:</th><td><input type="text" value="07886 879176"></td></tr>
+        </table>
+      </div>
+
+      <div class="block">
+        <div class="bar"><span class="title">Details of Site</span></div>
+        <table>
+          <colgroup><col style="width:28%"><col></colgroup>
+          <tr><th>Name:</th><td><input type="text" value="Mr Vojtech Dvorak"></td></tr>
+          <tr><th>Address:</th><td><input type="text" value="Flat 15"></td></tr>
+          <tr><th></th><td><input type="text" value="154 Goswell Road"></td></tr>
+          <tr><th></th><td><input type="text" value="London"></td></tr>
+          <tr><th></th><td><input type="text" value="Uk"></td></tr>
+          <tr><th>Postcode:</th><td><input type="text" value="EC1V 7DX"></td></tr>
+          <tr><th>Contact Number:</th><td><input type="text" value="07886 879176"></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Appliance Details -->
+    <div class="block">
+      <div class="bar">
+        <span class="title">Appliance Details</span>
+        <div class="actions">
+          <button type="button" class="add-btn" id="btnAddAppliance">+ Add appliance</button>
+        </div>
+      </div>
+      <table id="applianceTable" class="tight">
+        <colgroup>
+          <col style="width:4%"><!-- # -->
+          <col style="width:12%"><col style="width:12%"><col style="width:14%"><col style="width:14%">
+          <col style="width:10%"><col style="width:12%"><col style="width:10%"><col style="width:12%">
+          <col style="width:5%"><!-- actions -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th>#</th><th>Location</th><th>Type</th><th>Manufacturer</th><th>Model</th>
+            <th>Owned by Landlord</th><th>Appliance Inspected?</th><th>Flue Type</th><th>Outcome</th>
+            <th class="actions-col">×</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-idx">1</td>
+            <td><input type="text" value="Kitchen"></td>
+            <td><input type="text" value="Cooker"></td>
+            <td><input type="text" value="Bauknecht"></td>
+            <td><input type="text"></td>
+            <td><input type="text" value="No"></td>
+            <td><input type="text" value="Yes"></td>
+            <td><input type="text" value="Flueless"></td>
+            <td><input type="text" value="Pass"></td>
+            <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <template id="applianceRowTemplate">
+        <tr>
+          <td class="row-idx"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+        </tr>
+      </template>
+    </div>
+
+    <!-- Inspection Details (FULL WIDTH) -->
+    <div class="block">
+      <div class="bar"><span class="title">Inspection Details</span></div>
+      <table id="inspectionTable" class="tight tiny wrap2">
+        <colgroup>
+          <col style="width:4%"><!-- # -->
+          <col style="width:16%">
+          <col style="width:11%">
+          <col style="width:11%">
+          <col style="width:13%">
+          <col style="width:11%">
+          <col style="width:13%">
+          <col style="width:8%">
+          <col style="width:10%">
+          <col style="width:9%">
+          <col style="width:5%"><!-- actions -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th class="ylw">Operating Pressure (mbars) or heat input (kW/h)</th>
+            <th>Safety devices<br>operating correctly?</th>
+            <th>Satisfactory<br>Ventilation?</th>
+            <th>Visual condition of<br>flue & termination</th>
+            <th>Flue operation<br>checks.</th>
+            <th>Combustion analyser<br>reading.</th>
+            <th>Was appliance<br>serviced?</th>
+            <th>Is appliance safe<br>to use?</th>
+            <th>Visual inspection<br>only?</th>
+            <th class="actions-col">×</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-idx">1</td>
+            <td><input type="text" value="20mb kW/h"></td>
+            <td><input type="text" value="Yes"></td>
+            <td><input type="text" value="Yes"></td>
+            <td><input type="text" value="Pass"></td>
+            <td><input type="text" value="Pass"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="No"></td>
+            <td><input type="text" value="Yes"></td>
+            <td><input type="text" value="Yes"></td>
+            <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <template id="inspectionRowTemplate">
+        <tr>
+          <td class="row-idx"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+        </tr>
+      </template>
+    </div>
+
+    <!-- SINGLE BAND: Left = Final checks (NOTES as input row) | Right = Due -->
+    <div class="band-2-1">
+      <!-- Left column -->
+      <div class="block">
+        <div class="bar"><span class="title">Final check results</span></div>
+        <table class="tight">
+          <colgroup><col style="width:74%"><col style="width:26%"></colgroup>
+          <tr><th>Outcome of gas tightness test</th><td><input type="text" value="Pass"></td></tr>
+          <tr><th>Is the main protective equipotential bonding satisfactory?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>Is the emergency control accessible?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>Satisfactory visual inspection of gas installation pipework?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>CO alarm fitted and working?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>Smoke/fire alarm fitted and working?</th><td><input type="text" value="N/A"></td></tr>
+          <!-- NOTES now single-line text input -->
+          <tr>
+            <th>Notes</th>
+            <td><input type="text" placeholder="Enter notes"></td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Right column (Due) -->
+      <div class="due">
+        <div><strong>Next Inspection Is Due Before:</strong></div>
+        <div class="big">
+          <input class="date-field" type="date" value="2025-09-18" style="text-align:center;border:0;background:transparent;font:inherit">
+        </div>
+      </div>
+    </div>
+
+    <!-- Combined Table -->
+    <div class="block">
+      <div class="bar">
+        <span class="title">Defects / Remedial / Label &amp; Warning / Combustion Performance</span>
+        <div class="actions">
+          <button type="button" class="add-btn" id="btnAddCombined">+ Add row</button>
+        </div>
+      </div>
+      <table class="tight wrap2" id="combinedTable">
+        <colgroup>
+          <col style="width:5%"><!-- # -->
+          <col style="width:19%"><!-- Defects -->
+          <col style="width:19%"><!-- Remedial -->
+          <col style="width:17%"><!-- Label & Warning -->
+          <col style="width:10%"><!-- Low CO -->
+          <col style="width:10%"><!-- Low CO2 -->
+          <col style="width:10%"><!-- High CO -->
+          <col style="width:10%"><!-- High CO2 -->
+          <col style="width:5%"><!-- actions -->
+        </colgroup>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Defects Identified</th>
+            <th>Remedial Work Details</th>
+            <th>Label &amp; Warning Notice</th>
+            <th colspan="2">Low</th>
+            <th colspan="2">High</th>
+            <th class="actions-col">×</th>
+          </tr>
+          <tr>
+            <th></th><th></th><th></th><th></th>
+            <th>CO</th><th>CO₂&nbsp;Ratio</th>
+            <th>CO</th><th>CO₂&nbsp;Ratio</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-idx">1</td>
+            <td><input type="text" value="No"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+          </tr>
+          <tr>
+            <td class="row-idx">2</td>
+            <td><input type="text" value="No"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td><input type="text" value="N/A"></td>
+            <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <template id="combinedRowTemplate">
+        <tr>
+          <td class="row-idx"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td><input type="text"></td>
+          <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+        </tr>
+      </template>
+    </div>
+
+    <!-- Issued By and Received By (same row, separate tables) -->
+    <div class="row2">
+      <div class="block">
+        <div class="bar"><span class="title">Record Issued By</span></div>
+        <table class="tight">
+          <colgroup>
+            <col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%">
+          </colgroup>
+          <tr>
+            <th>Signature:</th>
+            <td colspan="3"><div class="sigbox"><img src="signature.png" alt="Signature" style="max-height:36px; max-width:120px;"></div></td>
+          </tr>
+          <tr>
+            <th>Gas Engineer</th>
+            <td><input type="text" value="AKM ZAHURUL Islam"></td>
+            <th>Gas Safe Licence</th>
+            <td><input type="text" value="5388937"></td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <td><input class="date-field" type="date" value="2024-09-18"></td>
+            <th></th><td></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="block">
+        <div class="bar"><span class="title">Received By</span></div>
+        <table class="tight">
+          <colgroup>
+            <col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%">
+          </colgroup>
+          <tr>
+            <th>Signature:</th>
+            <td colspan="3"><div class="sigbox"></div></td>
+          </tr>
+          <tr>
+            <th>Name</th>
+            <td><input type="text" value="Elena"></td>
+            <th>Position</th>
+            <td><input type="text"></td>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <td><input class="date-field" type="date" value="2024-09-18"></td>
+            <th></th><td></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="note">
+      This record can be used to document the outcome of checks and tests required by The Gas Safety (Installation and Use) Regulations 1998 as amended by the Gas Safety (Installation and Use) (Amendment) Regulations 2018. Some of the outcomes are as a result of visual inspection only and are recorded where appropriate. Unless specifically recorded no detailed inspection of the flue lining, construction or integrity has been performed. Registered Business / engineer details can be checked at www.gassaferegister.co.uk or by calling 0800 408 5500.
+    </div>
+  </form>
+</div>
+
+<script>
+  const btnAddAppliance = document.getElementById('btnAddAppliance');
+  const btnAddCombined  = document.getElementById('btnAddCombined');
+
+  const appTable = document.getElementById('applianceTable');
+  const appTbody = appTable?.querySelector('tbody');
+  const appTpl = document.getElementById('applianceRowTemplate');
+
+  const insTable = document.getElementById('inspectionTable');
+  const insTbody = insTable?.querySelector('tbody');
+  const insTpl = document.getElementById('inspectionRowTemplate');
+
+  const combTable = document.getElementById('combinedTable');
+  const combTbody = combTable?.querySelector('tbody');
+  const combTpl = document.getElementById('combinedRowTemplate');
+
+  function renumberTbody(tbody){
+    if (!tbody) return;
+    [...tbody.querySelectorAll('tr')].forEach((tr, i)=>{
+      const c = tr.querySelector('.row-idx');
+      if (c) c.textContent = String(i + 1);
+    });
+  }
+  function renumberAll(){
+    renumberTbody(appTbody);
+    renumberTbody(insTbody);
+    renumberTbody(combTbody);
+  }
+
+  function addApplianceAndInspection(){
+    if (appTpl && appTbody){ appTbody.appendChild(appTpl.content.firstElementChild.cloneNode(true)); }
+    if (insTpl && insTbody){ insTbody.appendChild(insTpl.content.firstElementChild.cloneNode(true)); }
+    renumberAll();
+  }
+  function addCombinedRow(){
+    if (combTpl && combTbody){
+      combTbody.appendChild(combTpl.content.firstElementChild.cloneNode(true));
+      renumberAll();
+    }
+  }
+
+  function deleteSyncedRow(sourceTbody, otherTbody, rowEl){
+    if (!rowEl || !sourceTbody) return;
+    const rows = Array.from(sourceTbody.querySelectorAll('tr'));
+    const idx = rows.indexOf(rowEl);
+    if (idx === -1) return;
+    rowEl.remove();
+    if (otherTbody){
+      const otherRows = Array.from(otherTbody.querySelectorAll('tr'));
+      if (idx >= 0 && idx < otherRows.length){ otherRows[idx].remove(); }
+    }
+    renumberAll();
+  }
+  function deleteRow(tbody, rowEl){
+    if (!rowEl || !tbody) return;
+    rowEl.remove();
+    renumberAll();
+  }
+
+  if (appTbody){
+    appTbody.addEventListener('click', (e)=>{
+      const b = e.target.closest('.del-btn'); if (!b) return;
+      deleteSyncedRow(appTbody, insTbody, b.closest('tr'));
+    });
+  }
+  if (insTbody){
+    insTbody.addEventListener('click', (e)=>{
+      const b = e.target.closest('.del-btn'); if (!b) return;
+      deleteSyncedRow(insTbody, appTbody, b.closest('tr'));
+    });
+  }
+  if (combTbody){
+    combTbody.addEventListener('click', (e)=>{
+      const b = e.target.closest('.del-btn'); if (!b) return;
+      deleteRow(combTbody, b.closest('tr'));
+    });
+  }
+
+  if (btnAddAppliance){ btnAddAppliance.addEventListener('click', addApplianceAndInspection); }
+  if (btnAddCombined){  btnAddCombined.addEventListener('click', addCombinedRow); }
+
+  renumberAll();
+</script>
+</body>
+</html>

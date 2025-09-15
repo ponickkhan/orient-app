@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ORIENT Gas Engineers LTD — Invoice Generator</title>
+<style>
+  /* ===== Page & Base ===== */
+  @page { size: A4 portrait; margin: 12mm; }
+  :root{
+    --ink:#1b1e24;
+    --blue:#2e5aa6;
+    --line:#cfd6e6;
+    --line-dark:#2e5aa6;
+    --muted:#6c7280;
+    --bg:#ffffff;
+    --chip:#eef3ff;
+  }
+  html, body { height:100%; }
+  body {
+    margin:0;
+    color:var(--ink);
+    background:var(--bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .wrap { max-width: 900px; margin: 24px auto; padding: 0 16px 40px; }
+
+  /* ===== Toolbar (not printed) ===== */
+  .toolbar {
+    position: sticky; top:0; z-index:50;
+    background:#f7f9ff; border-bottom:1px solid var(--line);
+    display:flex; gap:8px; padding:10px; justify-content:flex-end;
+  }
+  .btn {
+    appearance:none; border:1px solid var(--line); background:#fff;
+    padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;
+  }
+  .btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .btn.danger { color:#b00020; border-color:#f1c7cd; background:#fff; }
+  .btn.small { padding:6px 10px; border-radius:8px; font-size:13px; }
+
+  /* ===== Invoice Canvas ===== */
+  .sheet { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .header {
+    display:grid; grid-template-columns: 1.2fr 1fr; gap:16px;
+    padding:20px 20px 0;
+  }
+  .brand { display:flex; align-items:flex-start; gap:14px; }
+  .logo {
+    width:44px; height:44px; background:var(--blue); border-radius:10px;
+    box-shadow: inset 0 0 0 6px #fff;
+  }
+  .brand h1 { margin:0; font-size:22px; line-height:1.1; }
+  .brand .sub { color:var(--muted); font-size:12px; margin-top:3px; }
+  .invoice-meta {
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .field {
+    background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  }
+  .field label { display:block; font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .field input, .field select, .field textarea {
+    width:100%; border:0; padding:0; font:inherit; color:inherit; background:transparent; outline:none;
+  }
+  textarea { resize:vertical; min-height:36px; }
+
+  /* Bill To / Ship To */
+  .two { display:grid; grid-template-columns: 1fr 1fr; gap:16px; padding:16px 20px 0; }
+  .card { border:1px solid var(--line); border-radius:12px; padding:12px; background:#fff; }
+  .card h3 { margin:0 0 8px; font-size:13px; letter-spacing:.2px; color:var(--blue); }
+  .note { font-size:12px; color:var(--muted); }
+
+  /* ===== Items Table ===== */
+  table { width:100%; border-collapse: collapse; }
+  .items { padding:16px 20px; }
+  .items table { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .items thead th {
+    background:var(--chip);
+    color:#2a3559;
+    font-size:12px;
+    text-align:left;
+    border-bottom:1px solid var(--line);
+    padding:8px 10px;
+  }
+  .items tbody td {
+    border-top:1px solid var(--line);
+    padding:6px 10px;
+    vertical-align:top;
+  }
+  .items input, .items textarea, .items select { width:100%; border:0; background:transparent; font:inherit; outline:none; }
+  .qty, .price, .vat, .amount { width: 90px; }
+  .qty input, .price input, .vat input, .amount input { text-align:right; }
+
+  .actions-col { width:40px; text-align:center; }
+  .x {
+    appearance:none; border:0; background:transparent; color:#b00020;
+    font-size:20px; line-height:1; cursor:pointer; font-weight:900;
+  }
+
+  /* ===== Totals & Payment ===== */
+  .footer-grid {
+    display:grid; grid-template-columns: 1.2fr 0.8fr; gap:16px; padding:0 20px 20px;
+  }
+  .bank {
+    border:1px solid var(--line); border-radius:12px; padding:12px;
+  }
+  .bank h3 { margin:0 0 6px; font-size:13px; color:var(--blue); }
+  .bank .row { display:flex; gap:10px; font-size:13px; margin:4px 0; }
+  .chip {
+    display:inline-block; background:var(--chip); border:1px solid var(--line);
+    padding:2px 8px; border-radius:999px; font-size:12px;
+  }
+
+  .totals {
+    border:1px solid var(--line); border-radius:12px; padding:12px; background:#fff;
+  }
+  .totals table { width:100%; }
+  .totals td { padding:6px 0; }
+  .totals .label { color:var(--muted); }
+  .totals .num { text-align:right; font-variant-numeric: tabular-nums; }
+  .grand { border-top:1px dashed var(--line); margin-top:6px; padding-top:6px; font-size:18px; font-weight:800; color:#1d274b; }
+
+  .terms { padding:4px 20px 20px; color:var(--muted); font-size:12px; }
+
+  /* ===== Print ===== */
+  @media print{
+  .toolbar{ display:none !important; }
+  .wrap { margin:0 auto; padding:0; }
+  .sheet{ border:0; border-radius:0; }
+  .x, .add-line, a.btn { display:none !important; }
+  }
+</style>
+</head>
+<body>
+<div style="margin: 16px 0 0 16px;"><a href="index.html" class="btn">&larr; Back to Home</a></div>
+
+<div class="toolbar">
+  <button class="btn small" type="button" id="btnReset">Reset</button>
+  <button class="btn small" type="button" id="btnAdd">+ Add line</button>
+  <button class="btn primary" type="button" onclick="window.print()">Print / Save PDF</button>
+</div>
+
+<div class="wrap">
+  <div class="sheet">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+  <img src="logo.png" alt="Company Logo" class="logo" style="object-fit:cover;" />
+        <div>
+          <h1>ORIENT GAS ENGINEERS LTD</h1>
+          <div class="sub">Gas engineering &amp; safety checks</div>
+        </div>
+      </div>
+      <div class="invoice-meta">
+        <div class="field">
+          <label>Invoice #</label>
+          <input id="invNo" type="text" placeholder="e.g., OGE-2025-001">
+        </div>
+        <div class="field">
+          <label>Invoice Date</label>
+          <input id="invDate" type="date">
+        </div>
+        <div class="field">
+          <label>Reference / PO</label>
+          <input id="invRef" type="text" placeholder="Optional">
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input id="dueDate" type="date">
+        </div>
+      </div>
+    </div>
+
+    <!-- Parties -->
+    <div class="two">
+      <div class="card">
+        <h3>Bill To</h3>
+        <div class="field" style="border:none; padding:0;">
+          <label>Client / Company</label>
+          <input id="billName" type="text" placeholder="Client name">
+        </div>
+        <div class="field" style="border:none; padding:0;">
+          <label>Address</label>
+          <textarea id="billAddr" placeholder="Street, City, Postcode"></textarea>
+        </div>
+        <div class="field" style="border:none; padding:0;">
+          <label>Email / Contact</label>
+          <input id="billContact" type="text" placeholder="email@domain.com / +44 ...">
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>From</h3>
+        <div class="note">ORIENT GAS ENGINEERS LTD<br/>45 Chalk Pit Avenue, Orpington, Kent<br/>Gas Safe Reg No. 927879</div>
+        <div class="field" style="border:none; padding:0; margin-top:6px;">
+          <label>Notes (shown on invoice)</label>
+          <textarea id="invNotes" placeholder="Thank you for your business. Payment due within 7 days."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="items">
+      <table id="itemsTable" aria-label="Invoice line items">
+        <thead>
+          <tr>
+            <th style="width:36%">Description</th>
+            <th class="qty">Qty</th>
+            <th class="price">Unit Price</th>
+            <th class="vat">VAT %</th>
+            <th class="amount">Line Total</th>
+            <th class="actions-col"> </th>
+          </tr>
+        </thead>
+        <tbody id="itemBody">
+          <tr>
+            <td><textarea placeholder="Service / Part description"></textarea></td>
+            <td><input type="number" min="0" step="0.01" value="1"></td>
+            <td><input type="number" min="0" step="0.01" value="0"></td>
+            <td><input type="number" min="0" step="0.1" value="0"></td>
+            <td><input type="text" class="lineTotal" readonly></td>
+            <td class="actions-col"><button class="x" type="button" title="Delete">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding-top:8px;">
+        <button class="btn small add-line" type="button" id="btnAdd2">+ Add another line</button>
+      </div>
+    </div>
+
+    <!-- Totals & Bank -->
+    <div class="footer-grid">
+      <div class="bank">
+        <h3>Payment Information</h3>
+        <div class="row"><span class="chip">Bank Transfer (BACS)</span></div>
+        <div class="row"><strong>Account Name:</strong> ORIENT GAS ENGINEERS LTD</div>
+        <div class="row"><strong>Account Number:</strong> <span id="accNo">20354297</span></div>
+        <div class="row"><strong>Sort Code:</strong> <span id="sortCode">04-06-05</span></div>
+        <div class="row note">Please use the <em>Invoice #</em> as the payment reference.</div>
+      </div>
+
+      <div class="totals">
+        <table>
+          <tr>
+            <td class="label">Subtotal</td>
+            <td class="num" id="subTotal">£0.00</td>
+          </tr>
+          <tr>
+            <td class="label">VAT</td>
+            <td class="num" id="vatTotal">£0.00</td>
+          </tr>
+          <tr class="grand">
+            <td><strong>Total Due</strong></td>
+            <td class="num" id="grandTotal"><strong>£0.00</strong></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="terms">
+      <strong>Terms:</strong> Payment due by the stated due date via bank transfer. Late payments may incur charges. Goods/services remain the property of ORIENT GAS ENGINEERS LTD until paid in full.
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ===== Helpers =====
+  const fmtGBP = new Intl.NumberFormat('en-GB', { style:'currency', currency:'GBP' });
+
+  function recalc() {
+    const rows = [...document.querySelectorAll('#itemBody tr')];
+    let sub = 0, vat = 0;
+
+    rows.forEach(tr => {
+      const qty = parseFloat(tr.children[1].querySelector('input').value) || 0;
+      const price = parseFloat(tr.children[2].querySelector('input').value) || 0;
+      const vatPct = parseFloat(tr.children[3].querySelector('input').value) || 0;
+
+      const lineNet = qty * price;
+      const lineVat = lineNet * (vatPct / 100);
+
+      sub += lineNet;
+      vat += lineVat;
+
+      const totalCell = tr.children[4].querySelector('.lineTotal');
+      totalCell.value = fmtGBP.format(lineNet + lineVat);
+    });
+
+    document.getElementById('subTotal').textContent = fmtGBP.format(sub);
+    document.getElementById('vatTotal').textContent = fmtGBP.format(vat);
+    document.getElementById('grandTotal').textContent = fmtGBP.format(sub + vat);
+  }
+
+  function addRow() {
+    const tb = document.getElementById('itemBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><textarea placeholder="Service / Part description"></textarea></td>
+      <td><input type="number" min="0" step="0.01" value="1"></td>
+      <td><input type="number" min="0" step="0.01" value="0"></td>
+      <td><input type="number" min="0" step="0.1" value="0"></td>
+      <td><input type="text" class="lineTotal" readonly></td>
+      <td class="actions-col"><button class="x" type="button" title="Delete">×</button></td>
+    `;
+    tb.appendChild(tr);
+    recalc();
+  }
+
+  function resetForm() {
+    document.getElementById('invNo').value = genInv();
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('invDate').value = today;
+    document.getElementById('dueDate').value = today;
+
+    document.getElementById('billName').value = '';
+    document.getElementById('billAddr').value = '';
+    document.getElementById('billContact').value = '';
+    document.getElementById('invRef').value = '';
+    document.getElementById('invNotes').value = 'Thank you for your business. Payment due within 7 days.';
+
+    // keep one row
+    const tb = document.getElementById('itemBody');
+    tb.innerHTML = '';
+    addRow();
+    recalc();
+  }
+
+  function genInv() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const n = String(d.getDate()).padStart(2,'0');
+    return `OGE-${y}${m}${n}-${Math.floor(Math.random()*900+100)}`;
+  }
+
+  // ===== Events =====
+  document.getElementById('btnAdd').addEventListener('click', addRow);
+  document.getElementById('btnAdd2').addEventListener('click', addRow);
+  document.getElementById('btnReset').addEventListener('click', resetForm);
+
+  document.getElementById('itemsTable').addEventListener('input', (e) => {
+    if (e.target.matches('input, textarea')) recalc();
+  });
+  document.getElementById('itemsTable').addEventListener('click', (e) => {
+    if (e.target.closest('.x')) {
+      const tr = e.target.closest('tr');
+      tr.remove();
+      recalc();
+    }
+  });
+
+  // Init
+  (function init(){
+    // Pre-fill invoice/date
+    if(!document.getElementById('invNo').value) document.getElementById('invNo').value = genInv();
+    if(!document.getElementById('invDate').value){
+      const today = new Date().toISOString().slice(0,10);
+      document.getElementById('invDate').value = today;
+      document.getElementById('dueDate').value = today;
+    }
+    recalc();
+  })();
+</script>
+
+</body>
+</html>
