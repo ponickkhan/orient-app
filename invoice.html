@@ -147,7 +147,28 @@
   .wrap { margin:0 auto; padding:0; }
   .sheet{ border:0; border-radius:0; }
   .x, .add-line, a.btn { display:none !important; }
+  /* Hide input field indicators in print */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-clear-button,
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    display: none !important;
+    -webkit-appearance: none;
   }
+  input[type="date"], input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  select::-ms-expand {
+    display: none;
+  }
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+}
 </style>
 </head>
 <body>
