@@ -18,14 +18,14 @@
     line-height:1.15;
   }
   :root{
-  --ink:#1b1e24;
-  --line:#2e5aa6;
-  --muted:#6c727f;
-  --head-bg:#fffec7;
-  --vtitle-bg:#2e5aa6;
-  --vtitle-fg:#fff;
-  --bar:#2e5aa6;
-  --bar-fg:#fff;
+    --ink:#1b1e24;
+    --line:#2e5aa6;
+    --muted:#6c727f;
+    --head-bg:#fffec7;
+    --vtitle-bg:#2e5aa6;
+    --vtitle-fg:#fff;
+    --bar:#2e5aa6;
+    --bar-fg:#fff;
   }
 
   .toolbar{
@@ -61,18 +61,18 @@
 
   /* ===== Vertical title cell ===== */
   .vtitle{
-  background: var(--vtitle-bg);
-  color: var(--vtitle-fg);
-  font-weight: 900;
-  letter-spacing: .5px;
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-align: center;
-  vertical-align: middle;
-  padding: 0;
-  width: 22px; min-width: 22px;
-  box-shadow: 0 2px 8px #e3eaf7;
-  border-right: 2px solid var(--vtitle-bg);
+    background: var(--vtitle-bg);
+    color: var(--vtitle-fg);
+    font-weight: 900;
+    letter-spacing: .5px;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    vertical-align: middle;
+    padding: 0;
+    width: 22px; min-width: 22px;
+    box-shadow: none;
+    border-right: none;
   }
   .vtitle span{ display:inline-block; line-height:1.2; margin:auto; }
 
@@ -85,8 +85,13 @@
     width:100%; border:0; background:transparent; font:inherit; color:#111;
     -webkit-text-fill-color:#111;
     padding:0;
+    text-align: inherit;
   }
   select{ padding:0; }
+
+  /* Center the PF/NA inputs visually */
+  .pfna { text-align:center; }
+  .pfna input[type="text"]{ text-align:center; }
 
   /* ===== Safety split bar ===== */
   .splitbar{
@@ -107,18 +112,37 @@
   }
   .splitbar .right{ border-right:0; }
 
-  /* ===== Compact inline metrics (one skinny line) ===== */
+  /* ===== Compact inline metrics (flattened height) ===== */
   .metrics-inline{
-    display:flex; flex-wrap:wrap; align-items:center; gap:6px;
-    font-size:10.5px;
+    display:flex;
+    gap:4px;
+    align-items:center;
+    font-size:10px;
+    flex-wrap:nowrap;         /* keep single line */
   }
-  .metrics-inline .label{ color:var(--muted); }
-  .mini{ width:40px; min-width:40px; padding:0; text-align:center; }
+  .metrics-inline .label{
+    color:var(--muted);
+    white-space:nowrap;
+    line-height:1;            /* compact label */
+  }
+  .metrics-inline .mini{
+    width:32px; min-width:32px;
+    padding:0;
+    text-align:center;
+    height:18px;              /* match normal row */
+    font-size:10px;
+    line-height:18px;         /* vertically center text */
+    border:0;
+    background:transparent;
+  }
+
+  /* Reduce padding for the metrics cell itself to keep height tight */
+  td.metrics-cell { padding-top:2px; padding-bottom:2px; }
 
   /* ===== Print squeeze ===== */
   @media print{
-  .toolbar{ display:none !important; }
-  a.btn { display:none !important; }
+    .toolbar{ display:none !important; }
+    a.btn { display:none !important; }
     @page{ margin:5mm; }
     body{ font-size: 9.2px; line-height:1.12; }
     table{ font-size:9.2px; }
@@ -131,6 +155,7 @@
     .block{ border-width:1.2px; margin-top:4px; }
     .sheet{ width: 210mm; margin:0 auto; }
     .vtitle{ width:18px; min-width:18px; }
+    .metrics-inline .mini{ height:16px; line-height:16px; width:28px; min-width:28px; font-size:9px; }
     tr, table, .block { page-break-inside: avoid; }
   }
 </style>
@@ -145,7 +170,6 @@
 
 <div class="sheet">
 <form>
-
 
   <!-- Title -->
   <div class="titleband">
@@ -227,11 +251,36 @@
           <td class="vtitle" rowspan="6"><span>INSTALLATION</span></td>
           <th>Item</th><th class="center">Pass</th><th class="center">Fail</th><th class="center">N/A</th>
         </tr>
-        <tr><td>Satisfactory Meter/Cylinder</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
-        <tr><td>Inspection of Visible Pipework</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
-        <tr><td>ECV Access and Operation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
-        <tr><td>Protective Equipotential Bonding</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
-        <tr><td>Tightness Test</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td></tr>
+        <tr>
+          <td>Satisfactory Meter/Cylinder</td>
+          <td class="pfna"><input type="text" value="Pass"></td>
+          <td class="pfna"><input type="text" value=""></td>
+          <td class="pfna"><input type="text" value=""></td>
+        </tr>
+        <tr>
+          <td>Inspection of Visible Pipework</td>
+          <td class="pfna"><input type="text" value="Pass"></td>
+          <td class="pfna"><input type="text" value=""></td>
+          <td class="pfna"><input type="text" value=""></td>
+        </tr>
+        <tr>
+          <td>ECV Access and Operation</td>
+          <td class="pfna"><input type="text" value="Pass"></td>
+          <td class="pfna"><input type="text" value=""></td>
+          <td class="pfna"><input type="text" value=""></td>
+        </tr>
+        <tr>
+          <td>Protective Equipotential Bonding</td>
+          <td class="pfna"><input type="text" value="Pass"></td>
+          <td class="pfna"><input type="text" value=""></td>
+          <td class="pfna"><input type="text" value=""></td>
+        </tr>
+        <tr>
+          <td>Tightness Test</td>
+          <td class="pfna"><input type="text" value="Pass"></td>
+          <td class="pfna"><input type="text" value=""></td>
+          <td class="pfna"><input type="text" value=""></td>
+        </tr>
       </table>
     </div>
 
@@ -287,7 +336,7 @@
         <col style="width:10%"><!-- pass -->
         <col style="width:10%"><!-- fail -->
         <col style="width:10%"><!-- na -->
-        <col style="width:22%"><!-- comments (slightly narrower) -->
+        <col style="width:22%"><!-- comments -->
       </colgroup>
       <tr>
         <td class="vtitle" rowspan="21"><span>APPLIANCE</span></td>
@@ -298,22 +347,82 @@
         <th>Comments</th>
       </tr>
 
-      <tr><td>Gas Connection and Isolation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Electrical Connection &amp; Isolation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Water Connection &amp; Isolation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Overall Condition, Stability and Controls Operation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Visual Inspection of Heat Exchanger</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Burner and Injectors</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Fans</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Ignition</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Flame Picture</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Correct Safety Device(s) Operation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr>
+        <td>Gas Connection and Isolation</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Electrical Connection &amp; Isolation</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Water Connection &amp; Isolation</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Overall Condition, Stability and Controls Operation</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Visual Inspection of Heat Exchanger</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Burner and Injectors</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Fans</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Ignition</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Flame Picture</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Correct Safety Device(s) Operation</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
 
-      <!-- SPECIAL: Heat Input (super compact inline) -->
+      <!-- SPECIAL: Heat Input / Operating Pressure (metrics only) -->
       <tr>
         <td>Heat Input / Operating Pressure</td>
-        <td class="center"></td><td class="center"></td><td class="center"></td>
-        <td>
+        <td class="pfna"></td><td class="pfna"></td><td class="pfna"></td>
+        <td class="metrics-cell">
           <div class="metrics-inline">
             <span class="label">kW</span><input class="mini" type="text">
             <span class="label">kW/h</span><input class="mini" type="text">
@@ -322,20 +431,68 @@
         </td>
       </tr>
 
-      <tr><td>Seals including Appliance Casing</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Condensate Trap/Disposal</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Pressure/Temperature Relief Valve</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Return Air/Plenum</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Fireplace Catchment Space and Closure Plate</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Flue Flow &amp; Spillage Test</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Satisfactory Chimney/Flue</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
-      <tr><td>Satisfactory Ventilation</td><td class="center"><input type="text" value="Pass"></td><td></td><td></td><td><input type="text"></td></tr>
+      <tr>
+        <td>Seals including Appliance Casing</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Condensate Trap/Disposal</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Pressure/Temperature Relief Valve</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Return Air/Plenum</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Fireplace Catchment Space and Closure Plate</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Flue Flow &amp; Spillage Test</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Satisfactory Chimney/Flue</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
+      <tr>
+        <td>Satisfactory Ventilation</td>
+        <td class="pfna"><input type="text" value="Pass"></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td class="pfna"><input type="text" value=""></td>
+        <td><input type="text"></td>
+      </tr>
 
-      <!-- SPECIAL: Final Combustion (super compact inline) -->
+      <!-- SPECIAL: Final Combustion (metrics only) -->
       <tr>
         <td>Final Combustion Analyser Reading</td>
-        <td class="center"></td><td class="center"></td><td class="center"></td>
-        <td>
+        <td class="pfna"></td><td class="pfna"></td><td class="pfna"></td>
+        <td class="metrics-cell">
           <div class="metrics-inline">
             <span class="label">CO</span><input class="mini" type="text">
             <span class="label">CO₂%/Ratio</span><input class="mini" type="text">
@@ -407,7 +564,6 @@
 
   <div class="muted" style="font-size:10px; margin-top:6px;">
     © Orient Gas Engineers LTD.
-    <span class="nowrap"></span>
   </div>
 
 </form>
