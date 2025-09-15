@@ -18,14 +18,14 @@
     line-height:1.15;
   }
   :root{
-    --ink:#1b1e24;
-    --line:#3a3f48;
-    --muted:#6c727f;
-    --head-bg:#e9edf3;
-    --vtitle-bg:#2c2f36;
-    --vtitle-fg:#ffffff;
-    --bar:#2c2f36;
-    --bar-fg:#ffffff;
+  --ink:#1b1e24;
+  --line:#2e5aa6;
+  --muted:#6c727f;
+  --head-bg:#fffec7;
+  --vtitle-bg:#2e5aa6;
+  --vtitle-fg:#fff;
+  --bar:#2e5aa6;
+  --bar-fg:#fff;
   }
 
   .toolbar{
@@ -61,16 +61,18 @@
 
   /* ===== Vertical title cell ===== */
   .vtitle{
-    background: var(--vtitle-bg);
-    color: var(--vtitle-fg);
-    font-weight: 800;
-    letter-spacing: .5px;
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    text-align: center;
-    vertical-align: middle;
-    padding: 0;
-    width: 22px; min-width: 22px;
+  background: var(--vtitle-bg);
+  color: var(--vtitle-fg);
+  font-weight: 900;
+  letter-spacing: .5px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+  width: 22px; min-width: 22px;
+  box-shadow: 0 2px 8px #e3eaf7;
+  border-right: 2px solid var(--vtitle-bg);
   }
   .vtitle span{ display:inline-block; line-height:1.2; margin:auto; }
 
