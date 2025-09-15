@@ -41,6 +41,9 @@
 
   /* Blocks & tables */
   .block { border:2px solid var(--line); border-radius:3px; overflow:hidden; margin-top:6px; }
+select {
+  background: #fff !important;
+}
   .bar {
     background:var(--blue); color:#fff; font-weight:700; font-size:13px; padding:4px 6px;
     display:flex; align-items:center; justify-content:center; position:relative; min-height:28px;
@@ -110,6 +113,18 @@
 
   /* PRINT OVERRIDES: squeeze to one A4 page */
   @media print {
+  /* Hide dropdown indicator in print for select fields */
+  select::-ms-expand {
+    display: none;
+  }
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
     .sigbox img[alt="Signature"] { max-height:24px !important; }
     .hdr img[alt="Logo"] { top:-45px !important; }
     @page { size: A4 landscape; margin: 6mm; }
@@ -270,7 +285,12 @@
             <td><input type="text"></td>
             <td><input type="text" value="No"></td>
             <td><input type="text" value="Yes"></td>
-            <td><input type="text" value="Flueless"></td>
+            <td>
+              <select>
+                <option value="Flueless" selected>Flueless</option>
+                <option value="Open Flue">Open Flue</option>
+              </select>
+            </td>
             <td><input type="text" value="Pass"></td>
             <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
           </tr>
@@ -285,7 +305,12 @@
           <td><input type="text"></td>
           <td><input type="text"></td>
           <td><input type="text"></td>
-          <td><input type="text"></td>
+          <td>
+            <select>
+              <option value="Flueless">Flueless</option>
+              <option value="Open Flue">Open Flue</option>
+            </select>
+          </td>
           <td><input type="text"></td>
           <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
         </tr>
