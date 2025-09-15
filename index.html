@@ -41,9 +41,7 @@
 
   /* Blocks & tables */
   .block { border:2px solid var(--line); border-radius:3px; overflow:hidden; margin-top:6px; }
-select {
-  background: #fff !important;
-}
+  select { background:#fff !important; }
   .bar {
     background:var(--blue); color:#fff; font-weight:700; font-size:13px; padding:4px 6px;
     display:flex; align-items:center; justify-content:center; position:relative; min-height:28px;
@@ -59,7 +57,8 @@ select {
   .hdr { margin-top:6px; }
   .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
   .row2 { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-  .band-2-1 { display:grid; grid-template-columns: 2fr 1fr; gap:6px; }
+  .band-2-1 { display:grid; grid-template-columns: 2fr 1fr; gap:6px; }  /* 2:1 split */
+  .row3-mini { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; }
 
   .sigbox { height: 38px; }
   .note { font-size:8px; margin-top:3px; }
@@ -69,21 +68,15 @@ select {
   .tiny td, .tiny th { padding:2px 3px; font-size:10.5px; }
   .wrap2 th{ white-space:normal; line-height:1.2; }
 
-  /* Due banner: BLUE, centered, white date text (SHORTER HEIGHT) */
+  /* Due banner */
   .due {
     background: var(--blue);
     color:#fff;
     border:2px solid var(--line);
     border-radius:3px;
     padding:8px 6px;
-    margin-top: 10px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:6px;
-    min-height:74px;            /* was 110px -> lowered */
-    text-align:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    min-height:74px; text-align:center;
   }
   .due .big { font-size:18px; font-weight:800; }
   .due .date-field{
@@ -98,38 +91,38 @@ select {
   .due input[type="date"]::-webkit-datetime-edit-year-field { color:#fff; }
   .due input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(2); }
 
-  /* Tiny cross delete button */
+  /* Mini blocks */
+  .mini-block .bar { font-size:11px; min-height:22px; padding:3px 4px; }
+  .mini-block table th, .mini-block table td { padding:2px 3px; font-size:10.5px; }
+  .due.mini { min-height:48px; padding:6px 4px; margin-top: 5px; }
+  .due.mini .big { font-size:14px; }
+
+  /* NEW: Make Issued/Received mini tables flexible and print-safe (stacked rows) */
+  .mini-block.flex table { table-layout: auto; }
+  .mini-block.flex th { width: 38%; white-space: nowrap; }
+  .mini-block.flex td { width: 62%; }
+  .mini-block.flex input[type="text"],
+  .mini-block.flex input[type="date"] { font-size: 10.5px; min-width: 0; }
+
+  /* Delete button & narrow actions col */
+  .actions-col { width:24px; text-align:center; }
   .del-btn {
-    appearance:none;
-    background:transparent;
-    border:0;
-    color:#b70000;
-    font-size:16px;
-    line-height:1;
-    cursor:pointer;
-    font-weight:700;
+    appearance:none; background:transparent; border:0; color:#b70000;
+    font-size:16px; line-height:1; cursor:pointer; font-weight:700;
   }
   .del-btn:hover { color:#ff0000; }
 
-  /* PRINT OVERRIDES: squeeze to one A4 page */
+  /* PRINT OVERRIDES: reclaim actions column space and keep names/dates readable */
   @media print {
-  /* Hide dropdown indicator in print for select fields */
-  select::-ms-expand {
-    display: none;
-  }
-  select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background: #fff !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
+    select::-ms-expand { display: none; }
+    select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: #fff !important; border: none !important; box-shadow: none !important; }
     .sigbox img[alt="Signature"] { max-height:24px !important; }
     .hdr img[alt="Logo"] { top:-45px !important; }
     @page { size: A4 landscape; margin: 6mm; }
-  .toolbar, .add-btn, .del-btn, a.btn { display:none !important; }
+    .toolbar, .add-btn, .del-btn, a.btn { display:none !important; }
     th.actions-col, td.actions-col { display:none !important; }
+    /* Hide the <col> for actions to avoid empty space */
+    #applianceTable col.col-actions { display:none !important; }
 
     body { font-size: 9.4px; }
     h1 { font-size: 16.5px; }
@@ -143,24 +136,23 @@ select {
     .tight td, .tight th { padding:2px 3px; }
     .tiny td, .tiny th { padding:1px 2px; font-size:8.8px; }
 
-    .row3, .row2, .band-2-1 { gap:4px; }
-
+    .row3, .row2, .band-2-1, .row3-mini { gap:4px; }
     .sigbox { height:26px; }
-
-    .due { min-height:60px; margin-top:4px; padding:6px 4px; } /* lowered in print */
-    .due .big { font-size:14.5px; }
+    .due { min-height:54px; }
+    .due .big { font-size:13.5px; }
 
     .block, table, tr { page-break-inside: avoid; }
-  .sheet { margin: 0; width: 297mm; }
+    .sheet { margin: 0; width: 297mm; }
+
+    /* Print-specific tuning for the stacked mini blocks */
+    .mini-block.flex table { font-size: 8.6px; }
+    .mini-block.flex th, .mini-block.flex td { padding: 2px 3px; }
+    .mini-block.flex input[type="text"],
+    .mini-block.flex input[type="date"] { font-size: 8.6px; }
   }
 
   input[type="text"], input[type="date"], textarea {
-    width:100%;
-    border:0;
-    background:transparent;
-    font:inherit;
-    color:#000;
-    -webkit-text-fill-color:#000;
+    width:100%; border:0; background:transparent; font:inherit; color:#000; -webkit-text-fill-color:#000;
   }
   .date-field{ border-bottom:1px solid var(--line); padding-bottom:2px; min-height:18px; }
   textarea { resize:vertical; }
@@ -180,13 +172,13 @@ select {
     <a href="invoice.html" class="btn">Invoice</a>
     <a href="service &amp; maintenance checklist.html" class="btn">Service &amp; Maintenance Checklist</a>
   </div>
+
   <form>
     <div class="titleband">
       <h1>Domestic Landlord / Homeowner Gas Safety Record</h1>
     </div>
 
-
-    <!-- Header strip with logo on right -->
+    <!-- Header strip -->
     <table class="hdr">
       <colgroup>
         <col style="width:12%"><col style="width:23%"><col style="width:12%"><col style="width:23%"><col style="width:12%"><col style="width:18%">
@@ -254,67 +246,87 @@ select {
       </div>
     </div>
 
-    <!-- Appliance Details -->
-    <div class="block">
-      <div class="bar">
-        <span class="title">Appliance Details</span>
-        <div class="actions">
-          <button type="button" class="add-btn" id="btnAddAppliance">+ Add appliance</button>
+    <!-- NEW ROW: Appliance Details (left, wider) + Final check results (right) -->
+    <div class="band-2-1">
+      <!-- Appliance Details -->
+      <div class="block">
+        <div class="bar">
+          <span class="title">Appliance Details</span>
+          <div class="actions">
+            <button type="button" class="add-btn" id="btnAddAppliance">+ Add appliance</button>
+          </div>
         </div>
-      </div>
-      <table id="applianceTable" class="tight">
-        <colgroup>
-          <col style="width:4%"><!-- # -->
-          <col style="width:12%"><col style="width:12%"><col style="width:14%"><col style="width:14%">
-          <col style="width:10%"><col style="width:12%"><col style="width:10%"><col style="width:12%">
-          <col style="width:5%"><!-- actions -->
-        </colgroup>
-        <thead>
+
+        <!-- Outcome column removed; Actions col narrow & collapses in print -->
+        <table id="applianceTable" class="tight">
+          <colgroup>
+            <col style="width:4%"><!-- # -->
+            <col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:16%">
+            <col style="width:14%"><col style="width:14%"><col style="width:14%">
+            <col class="col-actions" style="width:24px"><!-- actions -->
+          </colgroup>
+          <thead>
+            <tr>
+              <th>#</th><th>Location</th><th>Type</th><th>Manufacturer</th><th>Model</th>
+              <th>Owned by Landlord</th><th>Appliance Inspected?</th><th>Flue Type</th>
+              <th class="actions-col">×</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-idx">1</td>
+              <td><input type="text" value="Kitchen"></td>
+              <td><input type="text" value="Cooker"></td>
+              <td><input type="text" value="Bauknecht"></td>
+              <td><input type="text"></td>
+              <td><input type="text" value="No"></td>
+              <td><input type="text" value="Yes"></td>
+              <td>
+                <select style="border: none;width: 80px;">
+                  <option value="Flueless" selected>Flueless</option>
+                  <option value="Open Flue">Open Flue</option>
+                </select>
+              </td>
+              <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Template for new rows -->
+        <template id="applianceRowTemplate">
           <tr>
-            <th>#</th><th>Location</th><th>Type</th><th>Manufacturer</th><th>Model</th>
-            <th>Owned by Landlord</th><th>Appliance Inspected?</th><th>Flue Type</th><th>Outcome</th>
-            <th class="actions-col">×</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="row-idx">1</td>
-            <td><input type="text" value="Kitchen"></td>
-            <td><input type="text" value="Cooker"></td>
-            <td><input type="text" value="Bauknecht"></td>
+            <td class="row-idx"></td>
             <td><input type="text"></td>
-            <td><input type="text" value="No"></td>
-            <td><input type="text" value="Yes"></td>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
+            <td><input type="text"></td>
             <td>
               <select>
-                <option value="Flueless" selected>Flueless</option>
+                <option value="Flueless">Flueless</option>
                 <option value="Open Flue">Open Flue</option>
               </select>
             </td>
-            <td><input type="text" value="Pass"></td>
             <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
           </tr>
-        </tbody>
-      </table>
-      <template id="applianceRowTemplate">
-        <tr>
-          <td class="row-idx"></td>
-          <td><input type="text"></td>
-          <td><input type="text"></td>
-          <td><input type="text"></td>
-          <td><input type="text"></td>
-          <td><input type="text"></td>
-          <td><input type="text"></td>
-          <td>
-            <select>
-              <option value="Flueless">Flueless</option>
-              <option value="Open Flue">Open Flue</option>
-            </select>
-          </td>
-          <td><input type="text"></td>
-          <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
-        </tr>
-      </template>
+        </template>
+      </div>
+
+      <!-- Final check results -->
+      <div class="block">
+        <div class="bar"><span class="title">Final check results</span></div>
+        <table class="tight">
+          <colgroup><col style="width:64%"><col style="width:36%"></colgroup>
+          <tr><th>Outcome of gas tightness test</th><td><input type="text" value="Pass"></td></tr>
+          <tr><th>Is the main protective equipotential bonding satisfactory?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>Is the emergency control accessible?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>Satisfactory visual inspection of gas installation pipework?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>CO alarm fitted and working?</th><td><input type="text" value="Yes"></td></tr>
+          <tr><th>Smoke/fire alarm fitted and working?</th><td><input type="text" value="N/A"></td></tr>
+          <tr><th>Notes</th><td><input type="text" placeholder="Enter notes"></td></tr>
+        </table>
+      </div>
     </div>
 
     <!-- Inspection Details (FULL WIDTH) -->
@@ -337,7 +349,7 @@ select {
         <thead>
           <tr>
             <th>#</th>
-            <th class="ylw">Operating Pressure (mbars) or heat input (kW/h)</th>
+            <th>Operating Pressure (mbars) or heat input (kW/h)</th>
             <th>Safety devices<br>operating correctly?</th>
             <th>Satisfactory<br>Ventilation?</th>
             <th>Visual condition of<br>flue & termination</th>
@@ -380,36 +392,6 @@ select {
           <td class="actions-col"><button type="button" class="del-btn" aria-label="Delete">×</button></td>
         </tr>
       </template>
-    </div>
-
-    <!-- SINGLE BAND: Left = Final checks (NOTES as input row) | Right = Due -->
-    <div class="band-2-1">
-      <!-- Left column -->
-      <div class="block">
-        <div class="bar"><span class="title">Final check results</span></div>
-        <table class="tight">
-          <colgroup><col style="width:74%"><col style="width:26%"></colgroup>
-          <tr><th>Outcome of gas tightness test</th><td><input type="text" value="Pass"></td></tr>
-          <tr><th>Is the main protective equipotential bonding satisfactory?</th><td><input type="text" value="Yes"></td></tr>
-          <tr><th>Is the emergency control accessible?</th><td><input type="text" value="Yes"></td></tr>
-          <tr><th>Satisfactory visual inspection of gas installation pipework?</th><td><input type="text" value="Yes"></td></tr>
-          <tr><th>CO alarm fitted and working?</th><td><input type="text" value="Yes"></td></tr>
-          <tr><th>Smoke/fire alarm fitted and working?</th><td><input type="text" value="N/A"></td></tr>
-          <!-- NOTES now single-line text input -->
-          <tr>
-            <th>Notes</th>
-            <td><input type="text" placeholder="Enter notes"></td>
-          </tr>
-        </table>
-      </div>
-
-      <!-- Right column (Due) -->
-      <div class="due">
-        <div><strong>Next Inspection Is Due Before:</strong></div>
-        <div class="big">
-          <input class="date-field" type="date" value="2025-09-18" style="text-align:center;border:0;background:transparent;font:inherit">
-        </div>
-      </div>
     </div>
 
     <!-- Combined Table -->
@@ -490,52 +472,59 @@ select {
       </template>
     </div>
 
-    <!-- Issued By and Received By (same row, separate tables) -->
-    <div class="row2">
-      <div class="block">
+    <!-- COMPACT ROW: Next Inspection + Issued By + Received By -->
+    <div class="row3-mini">
+      <div class="due mini">
+        <div><strong>Next Inspection Is Due Before:</strong></div>
+        <div class="big">
+          <input class="date-field" type="date" value="2025-09-18" style="text-align:center;border:0;background:transparent;font:inherit">
+        </div>
+      </div>
+
+      <!-- Record Issued By: stacked rows (no overlap) -->
+      <div class="block mini-block flex">
         <div class="bar"><span class="title">Record Issued By</span></div>
         <table class="tight">
-          <colgroup>
-            <col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%">
-          </colgroup>
+          <colgroup><col><col></colgroup>
           <tr>
-            <th>Signature:</th>
-            <td colspan="3"><div class="sigbox"><img src="signature.png" alt="Signature" style="max-height:36px; max-width:120px;"></div></td>
+            <th>Signature</th>
+            <td><div class="sigbox"><img src="signature.png" alt="Signature" style="max-height:28px; max-width:120px;"></div></td>
           </tr>
           <tr>
             <th>Gas Engineer</th>
             <td><input type="text" value="AKM ZAHURUL Islam"></td>
+          </tr>
+          <tr>
             <th>Gas Safe Licence</th>
             <td><input type="text" value="5388937"></td>
           </tr>
           <tr>
             <th>Date</th>
             <td><input class="date-field" type="date" value="2024-09-18"></td>
-            <th></th><td></td>
           </tr>
         </table>
       </div>
 
-      <div class="block">
+      <!-- Received By: stacked rows (no overlap) -->
+      <div class="block mini-block flex">
         <div class="bar"><span class="title">Received By</span></div>
         <table class="tight">
-          <colgroup>
-            <col style="width:20%"><col style="width:30%"><col style="width:20%"><col style="width:30%">
-          </colgroup>
+          <colgroup><col><col></colgroup>
           <tr>
-            <th>Signature:</th>
-            <td colspan="3"><div class="sigbox"></div></td>
+            <th>Signature</th>
+            <td><div class="sigbox"></div></td>
           </tr>
           <tr>
             <th>Name</th>
             <td><input type="text" value="Elena"></td>
+          </tr>
+          <tr>
             <th>Position</th>
             <td><input type="text"></td>
           </tr>
           <tr>
             <th>Date</th>
             <td><input class="date-field" type="date" value="2024-09-18"></td>
-            <th></th><td></td>
           </tr>
         </table>
       </div>
