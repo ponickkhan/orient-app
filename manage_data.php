@@ -1,10 +1,22 @@
 <?php
+// Enable error reporting for debugging (disable in production)
+// error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+
 require_once 'functions.php';
 
 $message = '';
-$filterType = $_GET['type'] ?? 'all';
-$filterDate = $_GET['date'] ?? '';
-$action = $_GET['action'] ?? '';
+$filterType = isset($_GET['type']) ? trim($_GET['type']) : 'all';
+$filterDate = isset($_GET['date']) ? trim($_GET['date']) : '';
+$filterPostcode = isset($_GET['postcode']) ? trim($_GET['postcode']) : '';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+$action = isset($_GET['action']) ? trim($_GET['action']) : '';
+
+// Sanitize search query to prevent issues with special characters
+if (!empty($searchQuery)) {
+    // Remove any potentially problematic characters but keep common ones
+    $searchQuery = preg_replace('/[^\p{L}\p{N}\s\-_.,@#]/u', '', $searchQuery);
+}
 
 // Handle delete action
 if ($action === 'delete' && isset($_GET['filename'])) {
@@ -16,16 +28,115 @@ if ($action === 'delete' && isset($_GET['filename'])) {
 }
 
 // Get records based on filters
-if ($filterType === 'all') {
-    $records = getAllRecords();
-} else {
-    $records = getRecordsByType($filterType);
+try {
+    if ($filterType === 'all') {
+        $records = getAllRecords();
+    } else {
+        $records = getRecordsByType($filterType);
+    }
+} catch (Exception $e) {
+    $records = [];
+    $message = '<div class="alert alert-error">Error loading records: ' . htmlspecialchars($e->getMessage()) . '</div>';
 }
 
 if (!empty($filterDate)) {
     $records = array_filter($records, function($record) use ($filterDate) {
+        if (!isset($record['created_at'])) return false;
         return date('Y-m-d', strtotime($record['created_at'])) === $filterDate;
     });
+}
+
+// Filter by postcode
+if (!empty($filterPostcode)) {
+    $records = array_filter($records, function($record) use ($filterPostcode) {
+        if (!isset($record['data']) || !is_array($record['data'])) return false;
+        
+        $postcodeFields = [
+            'site_postcode', 'landlord_postcode', 'business_postcode', // gas_safety
+            'client_postcode', // invoice
+        ];
+        
+        $filterPostcodeLower = mb_strtolower($filterPostcode, 'UTF-8');
+        
+        foreach ($postcodeFields as $field) {
+            if (isset($record['data'][$field]) && is_string($record['data'][$field])) {
+                $postcodeValue = mb_strtolower($record['data'][$field], 'UTF-8');
+                if (mb_strpos($postcodeValue, $filterPostcodeLower, 0, 'UTF-8') !== false) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
+}
+
+// Search filter (searches across multiple fields)
+if (!empty($searchQuery)) {
+    $records = array_filter($records, function($record) use ($searchQuery) {
+        if (!isset($record['data']) || !is_array($record['data'])) return false;
+        
+        $searchFields = [
+            // Gas Safety fields - updated for new textarea format
+            'site_name', 'site_address', 'site_postcode',
+            'landlord_name', 'landlord_address', 'landlord_postcode',
+            'business_name', 'business_address', 'business_postcode',
+            'serial_no', 'reference',
+            // Legacy fields (backward compatibility)
+            'site_address1', 'site_address2', 'site_address3', 'site_address4',
+            'landlord_address1', 'landlord_address2', 'landlord_address3', 'landlord_address4',
+            'business_address1', 'business_address2', 'business_address3',
+            // Invoice fields
+            'client_name', 'client_address', 'client_address1', 'client_postcode',
+            'invoice_number',
+            // Service checklist fields
+            'site_tenant_name', 'appliance_serial', 'appliance_manufacturer'
+        ];
+        
+        $searchQueryLower = mb_strtolower($searchQuery, 'UTF-8');
+        
+        foreach ($searchFields as $field) {
+            if (isset($record['data'][$field])) {
+                $fieldValue = $record['data'][$field];
+                if (is_string($fieldValue)) {
+                    $fieldValueLower = mb_strtolower($fieldValue, 'UTF-8');
+                    if (mb_strpos($fieldValueLower, $searchQueryLower, 0, 'UTF-8') !== false) {
+                        return true;
+                    }
+                }
+            }
+        }
+        // Also search in filename
+        if (isset($record['filename'])) {
+            $filenameLower = mb_strtolower($record['filename'], 'UTF-8');
+            if (mb_strpos($filenameLower, $searchQueryLower, 0, 'UTF-8') !== false) {
+                return true;
+            }
+        }
+        return false;
+    });
+}
+
+// Get unique postcodes from all records
+$uniquePostcodes = [];
+try {
+    $allRecordsForPostcodes = getAllRecords();
+    foreach ($allRecordsForPostcodes as $rec) {
+        if (!isset($rec['data']) || !is_array($rec['data'])) continue;
+        
+        $postcodeFields = ['site_postcode', 'landlord_postcode', 'business_postcode', 'client_postcode'];
+        foreach ($postcodeFields as $field) {
+            if (isset($rec['data'][$field]) && !empty($rec['data'][$field])) {
+                $pc = trim($rec['data'][$field]);
+                if (!empty($pc)) {
+                    $uniquePostcodes[$pc] = true;
+                }
+            }
+        }
+    }
+    ksort($uniquePostcodes);
+    $uniquePostcodes = array_keys($uniquePostcodes);
+} catch (Exception $e) {
+    $uniquePostcodes = [];
 }
 
 // Get unique dates and record counts
@@ -371,7 +482,25 @@ $recordCounts = [
   </div>
 
   <!-- Filters -->
-  <form method="GET" action="" class="filters">
+  <form method="GET" action="" class="filters" accept-charset="UTF-8">
+    <div class="filter-group">
+      <label for="search">Search:</label>
+      <input type="text" name="search" id="search" placeholder="Name, address, serial..." 
+             value="<?= htmlspecialchars($searchQuery, ENT_QUOTES, 'UTF-8') ?>" maxlength="100">
+    </div>
+
+    <div class="filter-group">
+      <label for="postcode">Filter by Postcode:</label>
+      <select name="postcode" id="postcode">
+        <option value="">All Postcodes</option>
+        <?php foreach ($uniquePostcodes as $pc): ?>
+          <option value="<?= htmlspecialchars($pc, ENT_QUOTES, 'UTF-8') ?>" <?= $filterPostcode === $pc ? 'selected' : '' ?>>
+            <?= htmlspecialchars($pc, ENT_QUOTES, 'UTF-8') ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+
     <div class="filter-group">
       <label for="type">Filter by Type:</label>
       <select name="type" id="type">
@@ -405,14 +534,20 @@ $recordCounts = [
     </div>
   </form>
 
-  <?php if ($filterType !== 'all' || !empty($filterDate)): ?>
+  <?php if ($filterType !== 'all' || !empty($filterDate) || !empty($filterPostcode) || !empty($searchQuery)): ?>
     <div class="search-info">
       <strong>Filtered Results:</strong>
+      <?php if (!empty($searchQuery)): ?>
+        Search: "<?= htmlspecialchars($searchQuery) ?>"
+      <?php endif; ?>
+      <?php if (!empty($filterPostcode)): ?>
+        <?= !empty($searchQuery) ? ' | ' : '' ?>Postcode: <?= htmlspecialchars($filterPostcode) ?>
+      <?php endif; ?>
       <?php if ($filterType !== 'all'): ?>
-        Type: <?= ucfirst(str_replace('_', ' ', $filterType)) ?>
+        <?= (!empty($searchQuery) || !empty($filterPostcode)) ? ' | ' : '' ?>Type: <?= ucfirst(str_replace('_', ' ', $filterType)) ?>
       <?php endif; ?>
       <?php if (!empty($filterDate)): ?>
-        <?= $filterType !== 'all' ? ' | ' : '' ?>Date: <?= formatDate($filterDate) ?>
+        <?= ($filterType !== 'all' || !empty($searchQuery) || !empty($filterPostcode)) ? ' | ' : '' ?>Date: <?= formatDate($filterDate) ?>
       <?php endif; ?>
       (<?= count($records) ?> record<?= count($records) !== 1 ? 's' : '' ?> found)
     </div>
@@ -430,6 +565,7 @@ $recordCounts = [
         <tr>
           <th>Type</th>
           <th>Created</th>
+          <th>Postcode</th>
           <th>Filename</th>
           <th>Preview</th>
           <th>Actions</th>
@@ -448,6 +584,19 @@ $recordCounts = [
               <div style="font-size: 12px; color: #6c757d;">
                 <?= date('g:i A', strtotime($record['created_at'])) ?>
               </div>
+            </td>
+            <td>
+              <?php 
+              $postcode = '';
+              if ($record['type'] === 'gas_safety') {
+                $postcode = $record['data']['site_postcode'] ?? $record['data']['landlord_postcode'] ?? '';
+              } elseif ($record['type'] === 'invoice') {
+                $postcode = $record['data']['client_postcode'] ?? '';
+              } elseif ($record['type'] === 'service_checklist') {
+                $postcode = $record['data']['site_postcode'] ?? '';
+              }
+              ?>
+              <span style="font-weight: 500;"><?= htmlspecialchars($postcode) ?></span>
             </td>
             <td>
               <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-size: 12px;">
@@ -488,7 +637,7 @@ $recordCounts = [
                 ?>
                 <a href="<?= $editPage ?>?edit=<?= urlencode($record['filename']) ?>" 
                    class="btn small success">Edit</a>
-                <a href="?action=delete&filename=<?= urlencode($record['filename']) ?>&type=<?= urlencode($filterType) ?>&date=<?= urlencode($filterDate) ?>" 
+                <a href="?action=delete&filename=<?= urlencode($record['filename']) ?>&type=<?= urlencode($filterType) ?>&date=<?= urlencode($filterDate) ?>&postcode=<?= urlencode($filterPostcode) ?>&search=<?= urlencode($searchQuery) ?>" 
                    class="btn small danger"
                    onclick="return confirm('Are you sure you want to delete this record? This action cannot be undone.')">Delete</a>
               </div>
@@ -508,6 +657,17 @@ document.getElementById('type').addEventListener('change', function() {
 
 document.getElementById('date').addEventListener('change', function() {
   this.form.submit();
+});
+
+document.getElementById('postcode').addEventListener('change', function() {
+  this.form.submit();
+});
+
+// Submit search on Enter key
+document.getElementById('search').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    this.form.submit();
+  }
 });
 </script>
 

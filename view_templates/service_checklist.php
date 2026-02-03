@@ -150,19 +150,15 @@ $data = $record['data'];
       <h4>Dates & Signatures</h4>
       <div class="data-item">
         <div class="data-label">Checks Completed</div>
-        <div class="data-value"><?= htmlspecialchars($data['checks_completed_date'] ?? '') ?: '<span class="empty-value">Not specified</span>' ?></div>
+        <div class="data-value"><?= !empty($data['checks_completed_date']) ? date('d/m/Y', strtotime($data['checks_completed_date'])) : '<span class="empty-value">Not specified</span>' ?></div>
       </div>
       <div class="data-item">
         <div class="data-label">Next Service Due</div>
-        <div class="data-value"><?= htmlspecialchars($data['next_service_due'] ?? '') ?: '<span class="empty-value">Not specified</span>' ?></div>
+        <div class="data-value"><?= !empty($data['next_service_due']) ? date('d/m/Y', strtotime($data['next_service_due'])) : '<span class="empty-value">Not specified</span>' ?></div>
       </div>
       <div class="data-item">
         <div class="data-label">Engineer Name</div>
         <div class="data-value"><?= htmlspecialchars($data['engineer_signature_name'] ?? '') ?: '<span class="empty-value">Not specified</span>' ?></div>
-      </div>
-      <div class="data-item">
-        <div class="data-label">Engineer Licence</div>
-        <div class="data-value"><?= htmlspecialchars($data['engineer_signature_licence'] ?? '') ?: '<span class="empty-value">Not specified</span>' ?></div>
       </div>
       <div class="data-item">
         <div class="data-label">Client Name</div>

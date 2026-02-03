@@ -29,6 +29,24 @@ if ($_POST) {
                     $message = '<div class="alert alert-error">Failed to save record.</div>';
                 }
             }
+        } elseif ($_POST['action'] === 'save_as') {
+            // Save as new record (copy)
+            $data = sanitizeInput($_POST);
+            unset($data['action']);
+            unset($data['edit_filename']); // Remove edit reference to create new
+            
+            // Generate new serial number for the copy
+            $data['serial_no'] = generateSerialNumber('gas_safety');
+            
+            $filename = saveFormData('gas_safety', $data);
+            if ($filename) {
+                $message = '<div class="alert alert-success">Record saved as new copy! Filename: ' . $filename . '</div>';
+                // Redirect to edit the new record
+                header('Location: index.php?edit=' . $filename);
+                exit;
+            } else {
+                $message = '<div class="alert alert-error">Failed to save record as new copy.</div>';
+            }
         }
     }
 }
@@ -42,6 +60,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         $editFilename = $_GET['edit'];
     }
 }
+
+// Generate serial number for new records
+$autoSerialNo = !$editMode ? generateSerialNumber('gas_safety') : ($formData['serial_no'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -183,51 +204,93 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     .toolbar, .add-btn, .del-btn, a.btn, .alert { display:none !important; }
     select::-ms-expand { display: none; }
     select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background: #fff !important; border: none !important; box-shadow: none !important; }
-    .sigbox img[alt="Signature"] { max-height:24px !important; }
-    .hdr img[alt="Logo"] { top:-45px !important; }
-    @page { size: A4 landscape; margin: 6mm; }
+    .sigbox { height:28px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .sigbox img[alt="Signature"] { max-height:26px !important; max-width: 100% !important; width: auto !important; object-fit: contain !important; }
+    .hdr img[alt="Logo"] { top:-42px !important; max-height:60px !important; }
+    @page { size: A4 landscape; margin: 5mm; }
     th.actions-col, td.actions-col { display:none !important; }
     /* Hide the <col> for actions to avoid empty space */
     #applianceTable col.col-actions { display:none !important; }
 
-    body { font-size: 9.4px; }
-    h1 { font-size: 16.5px; }
-    table { font-size: 9.4px; }
-    .titleband { margin-bottom:4px; }
+    html, body { height: auto !important; overflow: visible !important; }
+    body { font-size: 9px; }
+    h1 { font-size: 15px; margin: 0; }
+    
+    table { 
+      font-size: 9px;
+      border-collapse: collapse !important;
+      border: 1px solid var(--line) !important;
+    }
+    
+    tr {
+      border: 1px solid var(--line) !important;
+    }
+    
+    th, td { 
+      padding:1.5px 2.5px;
+      border: 1px solid var(--line) !important;
+      border-top: 1px solid var(--line) !important;
+      border-bottom: 1px solid var(--line) !important;
+    }
+    
+    .titleband { margin-bottom:2px; padding-bottom:1px; }
 
-    .block { border-width:1.2px; margin-top:4px; }
-    .bar { font-size:10.5px; padding:3px 4px; min-height:20px; }
+    .block { 
+      border-width:1px; 
+      border: 1px solid var(--line) !important;
+      margin-top:2px !important; 
+      margin-bottom:2px !important; 
+    }
+    .bar { font-size:10px; padding:2px 4px; min-height:18px; }
 
-    th, td { padding:2px 3px; }
-    .tight td, .tight th { padding:2px 3px; }
-    .tiny td, .tiny th { padding:1px 2px; font-size:8.8px; }
+    .tight td, .tight th { 
+      padding:1.5px 2.5px;
+      border: 1px solid var(--line) !important;
+    }
+    .tiny td, .tiny th { 
+      padding:1px 2px; 
+      font-size:8px;
+      border: 1px solid var(--line) !important;
+    }
 
-    .row3, .row2, .band-2-1, .row3-mini { gap:3px; margin-bottom:6px; }
-    .sigbox { height:22px; }
-    .due { min-height:48px; }
-    .due .big { font-size:12px; }
+    .row3, .row2, .band-2-1, .row3-mini { gap:2px; margin-bottom:2px; }
+    .hdr { 
+      margin-top:2px;
+      border-collapse: collapse !important;
+    }
+    .hdr th, .hdr td {
+      border: 1px solid var(--line) !important;
+    }
+    .due { min-height:42px; padding:4px 3px; }
+    .due .big { font-size:11px; }
+    .due.mini { min-height:38px; padding:3px 2px; margin-top:2px; }
+    .due.mini .big { font-size:10px; }
 
     .block, table, tr { page-break-inside: avoid; }
-    .sheet { margin: 0; width: 297mm; }
+    .sheet { margin: 0; padding: 0; width: 287mm; height: auto; max-height: 200mm; overflow: hidden; }
 
-    /* Tighter spacing for better single-page fit */
-    .block { margin-top:3px; margin-bottom:3px; }
-    table { margin-bottom:4px; }
-    
     /* Print-specific tuning for the stacked mini blocks */
+    .mini-block .bar { font-size:9px; min-height:16px; padding:2px 3px; }
     .mini-block.flex table { font-size: 8px; }
-    .mini-block.flex th, .mini-block.flex td { padding: 1px 2px; }
+    .mini-block.flex th, .mini-block.flex td { 
+      padding: 1px 2px;
+      border: 1px solid var(--line) !important;
+    }
     .mini-block.flex input[type="text"],
     .mini-block.flex input[type="date"] { font-size: 8px; }
     
     /* Optimize input sizing */
     input[type="text"], input[type="date"], textarea, select { 
-      font-size:8.8px !important; 
+      font-size:8.5px !important; 
       line-height:1.1 !important; 
+      padding: 0 !important;
     }
     
     /* Compact note section */
-    .note { font-size:7px; line-height:1.2; margin-top:6px; }
+    .note { font-size:7px; line-height:1.1; margin-top:3px; }
+    
+    /* Hide navigation links in print */
+    .sheet > div:first-child { display: none !important; }
   }
 
   input[type="text"], input[type="date"], textarea {
@@ -243,6 +306,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 <div class="toolbar" role="toolbar" aria-label="Actions">
   <button class="btn" type="button" onclick="document.querySelector('form').reset(); renumberAll();">Reset</button>
   <button class="btn success" type="button" onclick="document.querySelector('form').submit();">Save Record</button>
+  <?php if ($editMode): ?>
+  <button class="btn" type="button" onclick="document.querySelector('input[name=action]').value='save_as'; document.querySelector('form').submit();" style="background:#17a2b8; color:#fff;">Save As New</button>
+  <?php endif; ?>
   <a href="manage_data.php" class="btn info">View Saved Records</a>
   <button class="btn primary" type="button" onclick="window.print()">Print / Save PDF</button>
 </div>
@@ -289,7 +355,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         <th>Gas Safe Reg No:</th>
         <td><input type="text" name="gas_safe_reg_no" value="<?= htmlspecialchars($formData['gas_safe_reg_no'] ?? '927879') ?>"></td>
         <th>Serial no:</th>
-        <td><input type="text" name="serial_no" value="<?= htmlspecialchars($formData['serial_no'] ?? 'GAUK00764057') ?>"></td>
+        <td><input type="text" name="serial_no" value="<?= htmlspecialchars($formData['serial_no'] ?? $autoSerialNo) ?>" readonly style="background-color: #f0f0f0; cursor: not-allowed;"></td>
       </tr>
     </table>
 
@@ -298,11 +364,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
       <div class="block">
         <div class="bar"><span class="title">Details of Registered Business</span></div>
         <table>
-          <colgroup><col style="width:28%"><col></colgroup>
-          <tr><th>Name:</th><td><input type="text" name="business_name" value="<?= htmlspecialchars($formData['business_name'] ?? 'Orient Gas Engineers LTD') ?>"></td></tr>
-          <tr><th>Address:</th><td><input type="text" name="business_address1" value="<?= htmlspecialchars($formData['business_address1'] ?? '45 Chalk Pit Avenue') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="business_address2" value="<?= htmlspecialchars($formData['business_address2'] ?? 'Orpington') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="business_address3" value="<?= htmlspecialchars($formData['business_address3'] ?? 'Kent') ?>"></td></tr>
+          <colgroup><col style="width:22%"><col></colgroup>
+          <tr><th style="vertical-align:top; padding-top:6px;">Name:</th><td><textarea name="business_name" rows="1" style="resize:vertical; min-height:30px;"><?= htmlspecialchars($formData['business_name'] ?? 'Orient Gas Engineers LTD') ?></textarea></td></tr>
+          <tr><th style="vertical-align:top; padding-top:6px;">Address:</th><td><textarea name="business_address" rows="3" style="resize:vertical; min-height:50px;"><?= htmlspecialchars($formData['business_address'] ?? "45 Chalk Pit Avenue\nOrpington\nKent") ?></textarea></td></tr>
           <tr><th>Postcode:</th><td><input type="text" name="business_postcode" value="<?= htmlspecialchars($formData['business_postcode'] ?? 'BR5 3JJ') ?>"></td></tr>
           <tr><th>Contact Number:</th><td><input type="text" name="business_contact" value="<?= htmlspecialchars($formData['business_contact'] ?? '+44 7795 999196') ?>"></td></tr>
         </table>
@@ -311,12 +375,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
       <div class="block">
         <div class="bar"><span class="title">Details of Landlord / Homeowner (or agent where appropriate)</span></div>
         <table>
-          <colgroup><col style="width:28%"><col></colgroup>
-          <tr><th>Name:</th><td><input type="text" name="landlord_name" value="<?= htmlspecialchars($formData['landlord_name'] ?? '') ?>"></td></tr>
-          <tr><th>Address:</th><td><input type="text" name="landlord_address1" value="<?= htmlspecialchars($formData['landlord_address1'] ?? '') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="landlord_address2" value="<?= htmlspecialchars($formData['landlord_address2'] ?? '') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="landlord_address3" value="<?= htmlspecialchars($formData['landlord_address3'] ?? '') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="landlord_address4" value="<?= htmlspecialchars($formData['landlord_address4'] ?? '') ?>"></td></tr>
+          <colgroup><col style="width:22%"><col></colgroup>
+          <tr><th style="vertical-align:top; padding-top:6px;">Name:</th><td><textarea name="landlord_name" rows="1" style="resize:vertical; min-height:30px;"><?= htmlspecialchars($formData['landlord_name'] ?? '') ?></textarea></td></tr>
+          <tr><th style="vertical-align:top; padding-top:6px;">Address:</th><td><textarea name="landlord_address" rows="3" style="resize:vertical; min-height:50px;"><?= htmlspecialchars($formData['landlord_address'] ?? '') ?></textarea></td></tr>
           <tr><th>Postcode:</th><td><input type="text" name="landlord_postcode" value="<?= htmlspecialchars($formData['landlord_postcode'] ?? '') ?>"></td></tr>
           <tr><th>Contact Number:</th><td><input type="text" name="landlord_contact" value="<?= htmlspecialchars($formData['landlord_contact'] ?? '') ?>"></td></tr>
         </table>
@@ -325,12 +386,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
       <div class="block">
         <div class="bar"><span class="title">Details of Site</span></div>
         <table>
-          <colgroup><col style="width:28%"><col></colgroup>
-          <tr><th>Name:</th><td><input type="text" name="site_name" value="<?= htmlspecialchars($formData['site_name'] ?? '') ?>"></td></tr>
-          <tr><th>Address:</th><td><input type="text" name="site_address1" value="<?= htmlspecialchars($formData['site_address1'] ?? '') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="site_address2" value="<?= htmlspecialchars($formData['site_address2'] ?? '') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="site_address3" value="<?= htmlspecialchars($formData['site_address3'] ?? '') ?>"></td></tr>
-          <tr><th></th><td><input type="text" name="site_address4" value="<?= htmlspecialchars($formData['site_address4'] ?? '') ?>"></td></tr>
+          <colgroup><col style="width:22%"><col></colgroup>
+          <tr><th style="vertical-align:top; padding-top:6px;">Name:</th><td><textarea name="site_name" rows="1" style="resize:vertical; min-height:30px;"><?= htmlspecialchars($formData['site_name'] ?? '') ?></textarea></td></tr>
+          <tr><th style="vertical-align:top; padding-top:6px;">Address:</th><td><textarea name="site_address" rows="3" style="resize:vertical; min-height:50px;"><?= htmlspecialchars($formData['site_address'] ?? '') ?></textarea></td></tr>
           <tr><th>Postcode:</th><td><input type="text" name="site_postcode" value="<?= htmlspecialchars($formData['site_postcode'] ?? '') ?>"></td></tr>
           <tr><th>Contact Number:</th><td><input type="text" name="site_contact" value="<?= htmlspecialchars($formData['site_contact'] ?? '') ?>"></td></tr>
         </table>
@@ -397,7 +455,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
           <tr><th>Satisfactory visual inspection of gas installation pipework?</th><td><input type="text" name="gas_installation_pipework" value="<?= htmlspecialchars($formData['gas_installation_pipework'] ?? 'Yes') ?>"></td></tr>
           <tr><th>CO alarm fitted and working?</th><td><input type="text" name="co_alarm" value="<?= htmlspecialchars($formData['co_alarm'] ?? 'Yes') ?>"></td></tr>
           <tr><th>Smoke/fire alarm fitted and working?</th><td><input type="text" name="smoke_alarm" value="<?= htmlspecialchars($formData['smoke_alarm'] ?? 'N/A') ?>"></td></tr>
-          <tr><th>Notes</th><td><input type="text" name="notes" value="<?= htmlspecialchars($formData['notes'] ?? '') ?>" placeholder="Enter notes"></td></tr>
+          <tr><th>Notes</th><td><textarea name="notes" rows="3" style="width:100%; border:0; background:transparent; font:inherit; resize:vertical;"><?= htmlspecialchars($formData['notes'] ?? '') ?></textarea></td></tr>
         </table>
       </div>
     </div>

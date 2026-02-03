@@ -29,6 +29,24 @@ if ($_POST) {
                     $message = '<div class="alert alert-error">Failed to save service checklist.</div>';
                 }
             }
+        } elseif ($_POST['action'] === 'save_as') {
+            // Save as new record (copy)
+            $data = sanitizeInput($_POST);
+            unset($data['action']);
+            unset($data['edit_filename']); // Remove edit reference to create new
+            
+            // Generate new serial number for the copy
+            $data['appliance_serial'] = generateSerialNumber('service_checklist');
+            
+            $filename = saveFormData('service_checklist', $data);
+            if ($filename) {
+                $message = '<div class="alert alert-success">Checklist saved as new copy! Filename: ' . $filename . '</div>';
+                // Redirect to edit the new record
+                header('Location: service_checklist.php?edit=' . $filename);
+                exit;
+            } else {
+                $message = '<div class="alert alert-error">Failed to save checklist as new copy.</div>';
+            }
         }
     }
 }
@@ -42,6 +60,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         $editFilename = $_GET['edit'];
     }
 }
+
+// Generate serial number for new records
+$autoSerialNo = !$editMode ? generateSerialNumber('service_checklist') : ($formData['appliance_serial'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -109,10 +130,23 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
   .sheet{ width: calc(210mm - 16mm); min-height: calc(297mm - 16mm); margin: 8mm auto; }
 
   /* ===== Blocks & Tables ===== */
-  .block{ border:2px solid var(--line); border-radius:3px; overflow:hidden; margin-top:6px; }
-  table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:12px; }
-  th, td{ border:1px solid var(--line); padding:4px 6px; vertical-align:middle; background:#fff; }
-  th{ background:var(--head-bg); text-align:left; font-weight:700; }
+  .block{ border:2px solid #2e5aa6; border-radius:3px; margin-top:6px; }
+  table{ 
+    width:100%; 
+    border-collapse:collapse; 
+    table-layout:fixed; 
+    font-size:12px; 
+    border:2px solid #2e5aa6;
+    box-shadow: 0 0 0 1px #2e5aa6;
+  }
+  th, td{ 
+    border:1px solid #2e5aa6; 
+    padding:4px 6px; 
+    vertical-align:middle; 
+    background:#fff;
+    box-shadow: inset 0 0 0 1px #2e5aa6;
+  }
+  th{ background:#fffec7; text-align:left; font-weight:700; }
   .tight th, .tight td{ padding:3px 4px; }
   .small td, .small th{ font-size:11px; }
   .center{ text-align:center; }
@@ -122,7 +156,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
   /* ===== Title band ===== */
   .titleband{
     display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px;
-    border:2px solid var(--line); padding:8px 10px; margin-bottom:6px;
+    border:2px solid #2e5aa6; padding:8px 10px; margin-bottom:6px;
     background:#fff;
   }
   .titleband h1{ margin:0; font-size:20px; letter-spacing:.2px; }
@@ -131,8 +165,8 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 
   /* ===== Vertical title cell ===== */
   .vtitle{
-    background: var(--vtitle-bg);
-    color: var(--vtitle-fg);
+    background: #2e5aa6;
+    color: #fff;
     font-weight: 900;
     letter-spacing: .5px;
     writing-mode: vertical-rl;
@@ -142,14 +176,14 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     padding: 0;
     width: 22px; min-width: 22px;
     box-shadow: none;
-    border-right: none;
+    border: 1px solid #2e5aa6;
   }
   .vtitle span{ display:inline-block; line-height:1.2; margin:auto; }
 
   .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:6px; }
   .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; }
 
-  .sigbox{ height:34px; border:1px dashed var(--line); background:#fff; }
+  .sigbox{ height:34px; border:1px dashed #2e5aa6; background:#fff; }
 
   input[type="text"], input[type="date"], select{
     width:100%; border:0; background:transparent; font:inherit; color:#111;
@@ -165,8 +199,8 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 
   /* ===== Safety split bar ===== */
   .splitbar{
-    background: var(--bar);
-    color: var(--bar-fg);
+    background: #2e5aa6;
+    color: #fff;
     display:grid;
     grid-template-columns: 32% 68%;
     align-items:center;
@@ -181,7 +215,6 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     text-align:center;
   }
   .splitbar .right{ border-right:0; }
-
   /* ===== Compact inline metrics (flattened height) ===== */
   .metrics-inline{
     display:flex;
@@ -209,25 +242,174 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
   /* Reduce padding for the metrics cell itself to keep height tight */
   td.metrics-cell { padding-top:2px; padding-bottom:2px; }
 
-  /* ===== Print squeeze ===== */
-  @media print{
-    .toolbar, .alert{ display:none !important; }
-    a.btn { display:none !important; }
-    @page{ margin:5mm; }
-    body{ font-size: 9.2px; line-height:1.12; }
-    table{ font-size:9.2px; }
-    th, td{ padding:1.8px 2.6px; }
-    .tight th, .tight td{ padding:1.6px 2.4px; }
-    .small td, .small th{ font-size:9.2px; }
-    .titleband{ padding:6px 8px; }
-    .titleband h1{ font-size:16.5px; }
-    .brand{ font-size:16.5px; }
-    .block{ border-width:1.2px; margin-top:4px; }
-    .sheet{ width: 210mm; margin:0 auto; }
-    .vtitle{ width:18px; min-width:18px; }
-    .metrics-inline .mini{ height:16px; line-height:16px; width:28px; min-width:28px; font-size:9px; }
-    tr, table, .block { page-break-inside: avoid; }
+  /* ===== Print styles ===== */
+  @media print {
+    /* Hide non-printable elements */
+    .toolbar, .alert, a.btn { display: none !important; }
+    .sheet > div:first-of-type { display: none !important; }
+    .muted { display: none !important; }
+    
+    @page { 
+      margin: 5mm; 
+      size: A4 portrait; 
+    }
+    
+    html, body, *, *::before, *::after { 
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    
+    body { 
+      font-size: 9px;
+      line-height: 1.2;
+    }
+    
+    .sheet { 
+      width: 100%; 
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .titleband {
+      border: 1px solid #2e5aa6 !important;
+      box-shadow: 0 0 0 1px #2e5aa6 !important;
+      padding: 6px 8px !important;
+      margin-bottom: 4px !important;
+      page-break-after: avoid;
+      background: #fff !important;
+    }
+    
+    .titleband h1 { 
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    .block {
+      border: 1px solid #2e5aa6 !important;
+      box-shadow: 0 0 0 1px #2e5aa6 !important;
+      margin-top: 3px !important;
+      margin-bottom: 3px !important;
+      page-break-inside: avoid;
+    }
+    
+    table { 
+      font-size: 9px;
+      width: 100%;
+      border-collapse: collapse !important;
+      border: 1px solid #2e5aa6 !important;
+      box-shadow: 0 0 0 1px #2e5aa6 !important;
+      page-break-inside: avoid;
+    }
+    
+    tr { 
+      page-break-inside: avoid !important;
+      page-break-after: auto;
+    }
+    
+    th, td { 
+      border: 0.5px solid #2e5aa6 !important;
+      box-shadow: inset 0 0 0 0.5px #2e5aa6 !important;
+      padding: 2px 4px !important;
+      background: #fff !important;
+    }
+    
+    th {
+      background: #fffec7 !important;
+      font-weight: 700 !important;
+    }
+    
+    .tight th, .tight td {
+      padding: 2px 3px !important;
+      border: 0.5px solid #2e5aa6 !important;
+      box-shadow: inset 0 0 0 0.5px #2e5aa6 !important;
+    }
+    
+    .small th, .small td {
+      font-size: 8.5px !important;
+      border: 0.5px solid #2e5aa6 !important;
+      box-shadow: inset 0 0 0 0.5px #2e5aa6 !important;
+    }
+    
+    .vtitle {
+      background: #2e5aa6 !important;
+      color: #fff !important;
+      border: 1px solid #2e5aa6 !important;
+      box-shadow: inset 0 0 0 1px #2e5aa6 !important;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      width: 20px !important;
+      min-width: 20px !important;
+      padding: 4px 2px !important;
+    }
+    
+    .splitbar {
+      background: #2e5aa6 !important;
+      color: #fff !important;
+      border: 1px solid #2e5aa6 !important;
+    }
+    
+    .splitbar .left, .splitbar .right {
+      padding: 3px 4px !important;
+    }
+    
+    .sigbox {
+      border: 0.5px dashed #2e5aa6 !important;
+      box-shadow: inset 0 0 0 0.5px #2e5aa6 !important;
+      height: 24px !important;
+      background: #fff !important;
+      overflow: hidden !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    
+    .sigbox img {
+      max-height: 22px !important;
+      max-width: 100% !important;
+      width: auto !important;
+      height: auto !important;
+      object-fit: contain !important;
+    }
+    
+    input[type="text"], 
+    input[type="date"], 
+    select {
+      border: none !important;
+      border-bottom: 0.5px solid #2e5aa6 !important;
+      background: transparent !important;
+      -webkit-appearance: none !important;
+      appearance: none !important;
+      color: #111 !important;
+      -webkit-text-fill-color: #111 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      font-size: inherit !important;
+      line-height: inherit !important;
+    }
+    
+    .metrics-inline {
+      font-size: 8px !important;
+    }
+    
+    .metrics-inline .mini {
+      font-size: 8px !important;
+      height: 16px !important;
+      line-height: 16px !important;
+    }
+    
+    .brand img {
+      max-height: 60px !important;
+      width: auto !important;
+    }
+    
+    .row2, .row3 {
+      gap: 3px !important;
+      margin-bottom: 3px !important;
+    }
   }
+
 </style>
 </head>
 <body>
@@ -235,6 +417,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 <div class="toolbar" role="toolbar" aria-label="Actions">
   <button class="btn" type="button" onclick="document.querySelector('form').reset()">Reset</button>
   <button class="btn success" type="button" onclick="document.querySelector('form').submit();">Save Checklist</button>
+  <?php if ($editMode): ?>
+  <button class="btn" type="button" onclick="document.querySelector('input[name=action]').value='save_as'; document.querySelector('form').submit();" style="background:#17a2b8; color:#fff;">Save As New</button>
+  <?php endif; ?>
   <a href="manage_data.php" class="btn info">View Saved Records</a>
   <button class="btn primary" type="button" onclick="window.print()">Print / Save PDF</button>
 </div>
@@ -297,7 +482,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
   <div class="row2">
     <div class="block">
       <table class="tight small">
-        <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
+        <colgroup><col style="width:22px"><col style="width:24%"><col></colgroup>
         <tr>
           <td class="vtitle" rowspan="4"><span>SITE</span></td>
           <th>Tenant/Homeowner Name</th><td><input type="text" name="site_tenant_name" value="<?= htmlspecialchars($formData['site_tenant_name'] ?? '') ?>"></td>
@@ -309,7 +494,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     </div>
     <div class="block">
       <table class="tight small">
-        <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
+        <colgroup><col style="width:22px"><col style="width:24%"><col></colgroup>
         <tr>
           <td class="vtitle" rowspan="4"><span>CLIENT</span></td>
           <th>Landlord/Agent Name</th><td><input type="text" name="client_landlord_name" value="<?= htmlspecialchars($formData['client_landlord_name'] ?? '') ?>"></td>
@@ -400,7 +585,7 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
           </td>
         </tr>
         <tr><th>Manufacturer</th><td><input type="text" name="appliance_manufacturer" value="<?= htmlspecialchars($formData['appliance_manufacturer'] ?? '') ?>"></td></tr>
-        <tr><th>Serial No</th><td><input type="text" name="appliance_serial" value="<?= htmlspecialchars($formData['appliance_serial'] ?? '') ?>"></td></tr>
+        <tr><th>Serial No</th><td><input type="text" name="appliance_serial" value="<?= htmlspecialchars($formData['appliance_serial'] ?? $autoSerialNo) ?>" readonly style="background-color: #f0f0f0; cursor: not-allowed;"></td></tr>
       </table>
     </div>
   </div>
@@ -621,9 +806,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         <colgroup><col style="width:22px"><col style="width:42%"><col></colgroup>
         <tr>
           <td class="vtitle" rowspan="2"><span>DATE</span></td>
-          <th>Checks Completed</th><td><input type="date" name="checks_completed_date" value="<?= htmlspecialchars($formData['checks_completed_date'] ?? date('Y-m-d')) ?>"></td>
+          <th>Checks Completed</th><td><input type="date" name="checks_completed_date" value="<?= htmlspecialchars(!empty($formData['checks_completed_date']) ? $formData['checks_completed_date'] : date('Y-m-d')) ?>"></td>
         </tr>
-        <tr><th>Next Service/Maintenance Due</th><td><input type="date" name="next_service_due" value="<?= htmlspecialchars($formData['next_service_due'] ?? '') ?>"></td></tr>
+        <tr><th>Next Service/Maintenance Due</th><td><input type="date" name="next_service_due" value="<?= htmlspecialchars(!empty($formData['next_service_due']) ? $formData['next_service_due'] : date('Y-m-d', strtotime('+1 year'))) ?>"></td></tr>
       </table>
     </div>
 
@@ -631,11 +816,10 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
       <table class="tight small">
         <colgroup><col style="width:22px"><col style="width:28%"><col></colgroup>
         <tr>
-          <td class="vtitle" rowspan="3"><span>ENGINEER</span></td>
+          <td class="vtitle" rowspan="2"><span>ENGINEER</span></td>
           <th>Sign</th><td><div class="sigbox"><img src="signature.png" alt="Signature" style="height:32px; max-width:100%; object-fit:contain;"></div></td>
         </tr>
         <tr><th>Name</th><td><input type="text" name="engineer_signature_name" value="<?= htmlspecialchars($formData['engineer_signature_name'] ?? '') ?>"></td></tr>
-        <tr><th>Licence No</th><td><input type="text" name="engineer_signature_licence" value="<?= htmlspecialchars($formData['engineer_signature_licence'] ?? '') ?>"></td></tr>
       </table>
     </div>
 

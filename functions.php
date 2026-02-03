@@ -155,12 +155,13 @@ function updateFormData($filename, $data) {
 
 /**
  * Sanitize form input
+ * Note: Only trim input here, HTML encoding should happen at display time
  */
 function sanitizeInput($input) {
     if (is_array($input)) {
         return array_map('sanitizeInput', $input);
     }
-    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
+    return trim($input);
 }
 
 /**
@@ -193,5 +194,33 @@ function formatDate($date, $format = 'F j, Y') {
  */
 function getRecordCountByType($type) {
     return count(getRecordsByType($type));
+}
+
+/**
+ * Generate auto-incrementing serial number for gas safety records
+ * Format: ORIENTGAUK + 8 digit padded number (e.g., ORIENTGAUK00000001)
+ */
+function generateSerialNumber($type = 'gas_safety') {
+    $records = getRecordsByType($type);
+    $maxSerial = 0; // Starting from 0
+    
+    $fieldName = ($type === 'service_checklist') ? 'appliance_serial' : 'serial_no';
+    
+    foreach ($records as $record) {
+        if (isset($record['data'][$fieldName])) {
+            $serialNo = $record['data'][$fieldName];
+            // Extract numeric part from ORIENTGAUK prefix
+            if (preg_match('/^ORIENTGAUK(\d+)$/', $serialNo, $matches)) {
+                $num = intval($matches[1]);
+                if ($num > $maxSerial) {
+                    $maxSerial = $num;
+                }
+            }
+        }
+    }
+    
+    // Increment and format with ORIENTGAUK prefix and 8-digit padding
+    $nextSerial = $maxSerial + 1;
+    return 'ORIENTGAUK' . str_pad($nextSerial, 8, '0', STR_PAD_LEFT);
 }
 ?>
