@@ -223,4 +223,30 @@ function generateSerialNumber($type = 'gas_safety') {
     $nextSerial = $maxSerial + 1;
     return 'ORIENTGAUK' . str_pad($nextSerial, 8, '0', STR_PAD_LEFT);
 }
+
+/**
+ * Generate auto-incrementing invoice number
+ * Format: 5 digit padded number (e.g., 00001, 00022)
+ */
+function generateInvoiceNumber() {
+    $records = getRecordsByType('invoice');
+    $maxNumber = 0;
+    
+    foreach ($records as $record) {
+        if (isset($record['data']['invoice_number'])) {
+            $invoiceNo = $record['data']['invoice_number'];
+            // Extract numeric part
+            if (preg_match('/^(\d+)$/', $invoiceNo, $matches)) {
+                $num = intval($matches[1]);
+                if ($num > $maxNumber) {
+                    $maxNumber = $num;
+                }
+            }
+        }
+    }
+    
+    // Increment and format with 5-digit padding
+    $nextNumber = $maxNumber + 1;
+    return str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+}
 ?>

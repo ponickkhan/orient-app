@@ -1,0 +1,24 @@
+{
+    "type": "invoice",
+    "created_at": "2026-02-04 10:36:01",
+    "filename": "invoice_2026-02-04_10-36-01.json",
+    "data": {
+        "invoice_date": "04\/02\/2026",
+        "invoice_number": "00001",
+        "client_name": "Test Client",
+        "client_address1": "Dhaka",
+        "client_address2": "Bangladesh",
+        "client_city": "Dhaka",
+        "client_country": "Bangladesh",
+        "client_postcode": "1216",
+        "item_description": [
+            "gas safety service"
+        ],
+        "item_quantity": [
+            "1"
+        ],
+        "item_rate": [
+            "500.00"
+        ]
+    }
+}

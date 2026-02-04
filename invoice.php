@@ -21,13 +21,39 @@ if ($_POST) {
                     $message = '<div class="alert alert-error">Failed to update invoice.</div>';
                 }
             } else {
+                // Auto-generate invoice number if not set or empty
+                if (empty($data['invoice_number'])) {
+                    $data['invoice_number'] = generateInvoiceNumber();
+                }
+                
                 // Save new record
                 $filename = saveFormData('invoice', $data);
                 if ($filename) {
-                    $message = '<div class="alert alert-success">Invoice saved successfully! Filename: ' . $filename . '</div>';
+                    $message = '<div class="alert alert-success">Invoice saved successfully! Invoice #' . $data['invoice_number'] . '</div>';
                 } else {
                     $message = '<div class="alert alert-error">Failed to save invoice.</div>';
                 }
+            }
+        } elseif ($_POST['action'] === 'save_as') {
+            // Save As: Create new invoice with auto-generated number
+            $data = sanitizeInput($_POST);
+            unset($data['action']); // Remove action from saved data
+            unset($data['edit_filename']); // Remove edit reference
+            
+            // Generate new invoice number
+            $data['invoice_number'] = generateInvoiceNumber();
+            
+            // Save as new record
+            $filename = saveFormData('invoice', $data);
+            if ($filename) {
+                $message = '<div class="alert alert-success">Invoice saved as new! Invoice #' . $data['invoice_number'] . '</div>';
+                // Update form to show new invoice data
+                $formData = $data;
+                $editMode = false;
+                $editFilename = '';
+                $nextInvoiceNumber = $data['invoice_number']; // Set to the newly created invoice number
+            } else {
+                $message = '<div class="alert alert-error">Failed to save invoice.</div>';
             }
         }
     }
@@ -41,6 +67,11 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         $editMode = true;
         $editFilename = $_GET['edit'];
     }
+}
+
+// Generate next invoice number for new invoices
+if (!$editMode && !isset($nextInvoiceNumber)) {
+    $nextInvoiceNumber = generateInvoiceNumber();
 }
 ?>
 <!DOCTYPE html>
@@ -113,39 +144,41 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
   /* ===== Invoice Canvas ===== */
   .sheet { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; }
   .header {
-    display:grid; grid-template-columns: 1.2fr 1fr; gap:16px;
-    padding:20px 20px 0;
+    display:grid; grid-template-columns: 1.5fr 1fr; gap:24px;
+    padding:16px 20px 12px;
     align-items: start;
+    background:#f8f9fa;
   }
-  .brand { display:flex; align-items:flex-start; gap:14px; }
-  .logo { width:70px; height:70px; border-radius:10px; object-fit:cover; }
-  .brand-info h1 { margin:0 0 4px; font-size:22px; color:var(--blue); }
-  .brand-info p { margin:2px 0; color:var(--muted); font-size:14px; }
+  .brand { display:flex; flex-direction:column; align-items:flex-start; gap:10px; }
+  .logo { width:60px; height:60px; border-radius:8px; object-fit:cover; }
+  .brand-info h1 { margin:0 0 6px; font-size:18px; color:var(--ink); font-weight:700; }
+  .brand-info p { margin:3px 0; color:var(--ink); font-size:13px; line-height:1.5; }
 
   .invoice-meta { text-align:right; }
-  .invoice-title { font-size:28px; font-weight:800; color:var(--blue); margin:0 0 8px; }
-  .meta-row { display:flex; justify-content:space-between; align-items:center; margin:4px 0; }
-  .meta-label { font-weight:600; color:var(--muted); font-size:14px; }
-  .meta-value { font-weight:700; color:var(--ink); }
+  .invoice-title { font-size:32px; font-weight:700; color:var(--ink); margin:0 0 12px; letter-spacing:-0.5px; }
+  .meta-row { display:flex; justify-content:space-between; align-items:center; margin:6px 0; }
+  .meta-label { font-weight:600; color:#6c757d; font-size:13px; text-align:left; }
+  .meta-value { font-weight:600; color:var(--ink); text-align:right; font-size:13px; }
 
   /* ===== Billing Section ===== */
   .billing {
-    display:grid; grid-template-columns: 1fr 1fr; gap:20px;
-    padding:20px; border-bottom:1px solid var(--line);
+    padding:16px 20px; border-bottom:1px solid var(--line);
   }
-  .billing-block h3 { margin:0 0 10px; font-size:16px; color:var(--blue); }
-  .billing-block p { margin:2px 0; font-size:14px; color:var(--ink); }
+  .billing-block { max-width: 400px; border:1px solid var(--line); padding:0; }
+  .billing-block h3 { margin:0 0 8px; font-size:13px; color:#6c757d; background:#e9ecef; padding:5px 10px; font-weight:600; }
+  .billing-block p { margin:1px 0; font-size:13px; color:var(--ink); line-height:1.5; }
+  .billing-block input { padding-left:10px; }
 
   /* ===== Items Table ===== */
   .items { padding:0; }
   .items-table { width:100%; border-collapse:collapse; }
   .items-table th { 
-    background:var(--chip); padding:12px 16px; text-align:left; 
-    font-weight:600; color:var(--blue); border-bottom:2px solid var(--line);
+    background:#e9ecef; padding:10px 12px; text-align:left; 
+    font-weight:600; color:#495057; border-bottom:1px solid var(--line); font-size:13px;
   }
   .items-table td { 
-    padding:12px 16px; border-bottom:1px solid var(--line);
-    vertical-align:top;
+    padding:10px 12px; border-bottom:1px solid var(--line);
+    vertical-align:top; font-size:13px;
   }
   .items-table input, .items-table textarea {
     width:100%; border:none; background:transparent; font:inherit;
@@ -154,20 +187,33 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 
   /* ===== Totals ===== */
   .totals {
-    padding:20px; border-top:1px solid var(--line);
+    padding:16px 20px; border-top:1px solid var(--line);
     display:flex; justify-content:flex-end;
   }
   .totals-table { width:300px; }
-  .totals-table td { padding:8px 16px; }
-  .totals-table .label { text-align:right; font-weight:600; color:var(--muted); }
-  .totals-table .value { text-align:right; font-weight:700; }
-  .totals-table .total-row { border-top:2px solid var(--line); }
-  .totals-table .total-row .value { color:var(--blue); font-size:18px; }
+  .totals-table td { padding:6px 16px; font-size:14px; }
+  .totals-table .label { text-align:right; font-weight:600; color:#495057; }
+  .totals-table .value { text-align:right; font-weight:700; color:var(--ink); }
+  .totals-table .total-row { border-top:1px solid var(--line); }
+  .totals-table .total-row .label { font-weight:700; color:var(--ink); font-size:15px; }
+  .totals-table .total-row .value { color:var(--ink); font-size:16px; font-weight:700; }
+
+  /* ===== Payment Details ===== */
+  .payment-details {
+    padding:16px 20px; border-top:1px solid var(--line);
+    background:#f8f9fa;
+  }
+  .payment-details h3 { margin:0 0 8px; font-size:15px; color:var(--ink); font-weight:700; }
+  .payment-details p { margin:4px 0 10px; font-size:13px; color:var(--ink); line-height:1.5; }
+  .payment-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-top:8px; }
+  .payment-item { }
+  .payment-item .label { font-weight:600; color:var(--ink); font-size:13px; margin-bottom:1px; }
+  .payment-item .value { color:var(--ink); font-size:13px; }
 
   /* ===== Footer ===== */
   .footer {
-    padding:20px; background:var(--chip); border-top:1px solid var(--line);
-    text-align:center; color:var(--muted); font-size:13px;
+    padding:20px; border-top:1px solid var(--line);
+    text-align:center; color:var(--ink); font-size:15px; font-weight:600;
   }
 
   /* ===== Print Styles ===== */
@@ -175,11 +221,106 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
     .toolbar, .alert { display:none !important; }
     .wrap { margin:0; max-width:none; padding:0; }
     .sheet { border:none; border-radius:0; }
+    
+    /* Hide all buttons and action columns */
+    .add-item-btn, .remove-item-btn, button, .btn { display:none !important; }
+    .items-table th:last-child, .items-table td:last-child { display:none !important; }
+    
+    /* Make inputs look like plain text */
+    input[type="text"], input[type="date"], input[type="email"], input[type="number"], textarea {
+      border:none !important;
+      background:transparent !important;
+      padding:0 !important;
+      -webkit-appearance:none !important;
+      -moz-appearance:textfield !important;
+      appearance:none !important;
+      white-space:nowrap !important;
+    }
+    
+    /* Hide number input spinners - comprehensive */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance:none !important;
+      appearance:none !important;
+      margin:0 !important;
+      display:none !important;
+      opacity:0 !important;
+      visibility:hidden !important;
+    }
+    
+    /* Hide date input calendar icon and controls - comprehensive */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      display:none !important;
+      -webkit-appearance:none !important;
+      appearance:none !important;
+      opacity:0 !important;
+      visibility:hidden !important;
+      width:0 !important;
+      height:0 !important;
+      position:absolute !important;
+    }
+    
+    input[type="date"]::-webkit-inner-spin-button,
+    input[type="date"]::-webkit-clear-button {
+      display:none !important;
+      -webkit-appearance:none !important;
+    }
+    
+    input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+    input[type="date"]::-webkit-datetime-edit-text,
+    input[type="date"]::-webkit-datetime-edit-month-field,
+    input[type="date"]::-webkit-datetime-edit-day-field,
+    input[type="date"]::-webkit-datetime-edit-year-field {
+      -webkit-appearance:none !important;
+      padding:0 !important;
+    }
+    
+    input:focus, textarea:focus { outline:none !important; }
+    
+    /* Remove placeholder text in print */
+    input::placeholder, textarea::placeholder { color:transparent !important; }
+    
+    /* Hide empty inputs/textareas */
+    input:placeholder-shown, textarea:placeholder-shown { 
+      min-height:auto !important;
+      height:auto !important;
+    }
+    
+    textarea {
+      resize:none !important;
+      overflow:hidden !important;
+      height:auto !important;
+    }
+    
+    /* Prevent line breaks in billing address */
+    .billing-block input {
+      display:inline !important;
+      white-space:nowrap !important;
+      overflow:visible !important;
+      padding-left:10px !important;
+    }
+    
+    .billing-block br { display:none !important; }
+    
+    .billing-block p {
+      white-space:nowrap !important;
+      overflow:visible !important;
+      padding-left:10px !important;
+    }
+    
+    /* Adjust table for print */
+    .items-table th:nth-child(1), .items-table td:nth-child(1) { width:55% !important; }
+    .items-table th:nth-child(2), .items-table td:nth-child(2) { width:10% !important; }
+    .items-table th:nth-child(3), .items-table td:nth-child(3) { width:15% !important; }
+    .items-table th:nth-child(4), .items-table td:nth-child(4) { width:20% !important; }
+    
+    /* Navigation buttons */
+    div[style*="display:flex"][style*="gap:16px"] { display:none !important; }
   }
 
   /* ===== Form Styles ===== */
-  input[type="text"], input[type="date"], input[type="email"], input[type="number"], textarea {
-    border:none; background:transparent; font:inherit; color:inherit; width:100%;
+  input[type="text"], input[type="email"], textarea {
+    border:none; background:transparent; font:inherit; color:inherit; width:100% !important;
   }
   input:focus, textarea:focus { outline:1px solid var(--blue); }
   .add-item-btn, .remove-item-btn {
@@ -195,6 +336,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
 <div class="toolbar">
   <button class="btn" type="button" onclick="document.querySelector('form').reset(); calculateTotals();">Reset</button>
   <button class="btn success" type="button" onclick="document.querySelector('form').submit();">Save Invoice</button>
+  <?php if ($editMode): ?>
+  <button class="btn info" type="button" onclick="document.querySelector('input[name=action]').value='save_as'; document.querySelector('form').submit();">Save As New</button>
+  <?php endif; ?>
   <a href="manage_data.php" class="btn info">View Saved Records</a>
   <button class="btn primary" type="button" onclick="window.print()">Print / Save PDF</button>
 </div>
@@ -224,25 +368,19 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
           <img class="logo" src="logo.png" alt="Company Logo" />
           <div class="brand-info">
             <h1>ORIENT Gas Engineers LTD</h1>
-            <p>Gas Safe Registered: <strong>927879</strong></p>
-            <p>45 Chalk Pit Avenue, Orpington, Kent BR5 3JJ</p>
-            <p>Phone: +44 7795 999196</p>
-            <p>Email: info@orientgas.co.uk</p>
+            <p><span style="font-size:11px; margin-right:4px; color:#000; filter:grayscale(100%);">📍</span>45 Chalk Pit Avenue, Orpington, Kent, BR5 3JJ</p>
+            <p><span style="font-size:11px; margin-right:4px; color:#000; filter:grayscale(100%);">☎</span>07552478584</p>
           </div>
         </div>
         <div class="invoice-meta">
           <h2 class="invoice-title">INVOICE</h2>
           <div class="meta-row">
-            <span class="meta-label">Invoice #:</span>
-            <input class="meta-value" type="text" name="invoice_number" value="<?= htmlspecialchars($formData['invoice_number'] ?? 'INV-' . date('Ymd') . '-001') ?>" style="width:140px;">
+            <span class="meta-label">Date</span>
+            <input class="meta-value" type="text" name="invoice_date" value="<?= htmlspecialchars($formData['invoice_date'] ?? date('d/m/Y')) ?>" placeholder="DD/MM/YYYY" style="width:140px;">
           </div>
           <div class="meta-row">
-            <span class="meta-label">Date:</span>
-            <input class="meta-value" type="date" name="invoice_date" value="<?= htmlspecialchars($formData['invoice_date'] ?? date('Y-m-d')) ?>" style="width:140px;">
-          </div>
-          <div class="meta-row">
-            <span class="meta-label">Due Date:</span>
-            <input class="meta-value" type="date" name="due_date" value="<?= htmlspecialchars($formData['due_date'] ?? date('Y-m-d', strtotime('+30 days'))) ?>" style="width:140px;">
+            <span class="meta-label">Invoice No.</span>
+            <input class="meta-value" type="text" name="invoice_number" value="<?= htmlspecialchars($formData['invoice_number'] ?? $nextInvoiceNumber ?? '00001') ?>" style="width:140px;" readonly>
           </div>
         </div>
       </div>
@@ -250,8 +388,8 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
       <!-- Billing Information -->
       <div class="billing">
         <div class="billing-block">
-          <h3>Bill To:</h3>
-          <input type="text" name="client_name" value="<?= htmlspecialchars($formData['client_name'] ?? '') ?>" placeholder="Client Name" style="font-weight:700; font-size:16px; margin-bottom:6px;">
+          <h3>Bill to</h3>
+          <input type="text" name="client_name" value="<?= htmlspecialchars($formData['client_name'] ?? '') ?>" placeholder="Client Name" style="font-weight:400; font-size:14px; margin-bottom:2px;">
           <br>
           <input type="text" name="client_address1" value="<?= htmlspecialchars($formData['client_address1'] ?? '') ?>" placeholder="Address Line 1">
           <br>
@@ -259,17 +397,9 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
           <br>
           <input type="text" name="client_city" value="<?= htmlspecialchars($formData['client_city'] ?? '') ?>" placeholder="City">
           <br>
+          <input type="text" name="client_country" value="<?= htmlspecialchars($formData['client_country'] ?? '') ?>" placeholder="Country">
+          <br>
           <input type="text" name="client_postcode" value="<?= htmlspecialchars($formData['client_postcode'] ?? '') ?>" placeholder="Postcode">
-        </div>
-        <div class="billing-block">
-          <h3>Service Address:</h3>
-          <input type="text" name="service_address1" value="<?= htmlspecialchars($formData['service_address1'] ?? '') ?>" placeholder="Service Address Line 1" style="font-weight:700; margin-bottom:6px;">
-          <br>
-          <input type="text" name="service_address2" value="<?= htmlspecialchars($formData['service_address2'] ?? '') ?>" placeholder="Service Address Line 2">
-          <br>
-          <input type="text" name="service_city" value="<?= htmlspecialchars($formData['service_city'] ?? '') ?>" placeholder="City">
-          <br>
-          <input type="text" name="service_postcode" value="<?= htmlspecialchars($formData['service_postcode'] ?? '') ?>" placeholder="Postcode">
         </div>
       </div>
 
@@ -278,11 +408,11 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
         <table class="items-table" id="itemsTable">
           <thead>
             <tr>
-              <th style="width:45%">Description</th>
-              <th style="width:10%">Qty</th>
-              <th style="width:15%">Rate</th>
-              <th style="width:15%">Amount</th>
-              <th style="width:15%">Action</th>
+              <th style="width:50%">Description</th>
+              <th style="width:10%; text-align:center;">Qty</th>
+              <th style="width:15%; text-align:right;">Unit Price</th>
+              <th style="width:15%; text-align:right;">Amount</th>
+              <th style="width:10%">Action</th>
             </tr>
           </thead>
           <tbody id="itemsTableBody">
@@ -299,25 +429,52 @@ if (isset($_GET['edit']) && !empty($_GET['edit'])) {
       <div class="totals">
         <table class="totals-table">
           <tr>
-            <td class="label">Subtotal:</td>
+            <td class="label">Subtotal</td>
             <td class="value">£<span id="subtotal">0.00</span></td>
           </tr>
-          <tr>
-            <td class="label">VAT (20%):</td>
-            <td class="value">£<span id="vat">0.00</span></td>
-          </tr>
           <tr class="total-row">
-            <td class="label">Total:</td>
+            <td class="label">Total</td>
             <td class="value">£<span id="total">0.00</span></td>
           </tr>
         </table>
       </div>
 
+      <!-- Payment Terms & Details -->
+      <div class="payment-details">
+        <h3>Payment Terms & Details</h3>
+        <p>This invoice is expected to be paid immediately.</p>
+        
+        <div class="payment-grid">
+          <div class="payment-item">
+            <div class="label">Bank Name</div>
+            <div class="value">Tide</div>
+          </div>
+          <div class="payment-item">
+            <div class="label">Account Name</div>
+            <div class="value">Orient Gas Engineers LTD</div>
+          </div>
+          <div class="payment-item">
+            <div class="label">Account Number</div>
+            <div class="value">20354297</div>
+          </div>
+          <div class="payment-item">
+            <div class="label">Sort Code</div>
+            <div class="value">04-06-05</div>
+          </div>
+          <div class="payment-item">
+            <div class="label">Company Number</div>
+            <div class="value">14584954</div>
+          </div>
+          <div class="payment-item">
+            <div class="label">VAT Number</div>
+            <div class="value"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Footer -->
       <div class="footer">
-        <p><strong>Payment Terms:</strong> Net 30 days</p>
-        <p><strong>Payment Methods:</strong> Bank Transfer, Cash, Card</p>
-        <p>Thank you for choosing ORIENT Gas Engineers LTD!</p>
+        <p>Thank You</p>
       </div>
     </form>
   </div>
@@ -332,9 +489,9 @@ function addItem() {
   const row = document.createElement('tr');
   row.innerHTML = `
     <td><textarea name="item_description[]" placeholder="Enter service description" rows="2" style="resize:vertical;"></textarea></td>
-    <td><input type="number" name="item_quantity[]" value="1" min="0" step="0.01" class="qty-input" onchange="calculateRowTotal(this)"></td>
-    <td><input type="number" name="item_rate[]" value="0.00" min="0" step="0.01" class="rate-input" onchange="calculateRowTotal(this)"></td>
-    <td><span class="amount-display">£0.00</span></td>
+    <td style="text-align:center;"><input type="text" name="item_quantity[]" value="1" class="qty-input" onchange="calculateRowTotal(this)" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></td>
+    <td style="text-align:right;"><input type="text" name="item_rate[]" value="0.00" class="rate-input" onchange="calculateRowTotal(this)" oninput="this.value=this.value.replace(/[^0-9.]/g,'')"></td>
+    <td style="text-align:right;"><span class="amount-display">£0.00</span></td>
     <td><button type="button" class="remove-item-btn" onclick="removeItem(this)">Remove</button></td>
   `;
   tbody.appendChild(row);
@@ -364,11 +521,9 @@ function calculateTotals() {
     subtotal += qty * rate;
   });
   
-  const vat = subtotal * 0.20;
-  const total = subtotal + vat;
+  const total = subtotal;
   
   document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-  document.getElementById('vat').textContent = vat.toFixed(2);
   document.getElementById('total').textContent = total.toFixed(2);
 }
 
